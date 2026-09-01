@@ -51,8 +51,25 @@ public class DataInitializer implements CommandLineRunner {
         this.passwordEncoder = passwordEncoder;
     }
 
+    /** Paleta para regenerar portadas de juegos que quedaron sin archivo (ver repararImagenesFaltantes). */
+    private static final Color[][] PALETA = {
+            {new Color(29, 32, 92), new Color(111, 66, 193)},
+            {new Color(92, 30, 20), new Color(191, 130, 30)},
+            {new Color(15, 84, 74), new Color(46, 204, 113)},
+            {new Color(15, 76, 90), new Color(52, 152, 219)},
+            {new Color(58, 58, 58), new Color(230, 126, 34)},
+    };
+
     @Override
     public void run(String... args) {
+        // Se ejecuta SIEMPRE, incluso si ya hay datos: en hostings con
+        // disco efimero pero base de datos persistente (tipico Render +
+        // Neon), cada redeploy arranca con /uploads vacio aunque la base
+        // ya tenga filas de Juego apuntando a archivos que existieron en
+        // el contenedor anterior. Sin esto, esas imagenes quedarian rotas
+        // para siempre (o hasta que alguien las edite a mano).
+        repararImagenesFaltantes();
+
         if (usuarioRepository.count() > 0) {
             return; // ya hay datos, no duplicar
         }
@@ -109,6 +126,44 @@ public class DataInitializer implements CommandLineRunner {
         juego.setVendedor(vendedor);
         juego.setImagenUrl(imagenUrl);
         juegoRepository.save(juego);
+    }
+
+    /**
+     * Recorre todos los juegos existentes y, si su imagenUrl apunta a un
+     * archivo que ya no esta en disco (disco efimero + redeploy), le
+     * genera una portada nueva y actualiza el registro. Cubre tanto las
+     * portadas de ejemplo como -en el mismo mecanismo- cualquier imagen
+     * subida por un vendedor real que se haya perdido: mejor mostrar un
+     * placeholder prolijo que un icono de imagen rota.
+     */
+    private void repararImagenesFaltantes() {
+        Path dir = Paths.get(uploadDir);
+        int reparadas = 0;
+
+        for (Juego juego : juegoRepository.findAll()) {
+            String url = juego.getImagenUrl();
+            if (url == null || url.isBlank()) {
+                continue;
+            }
+            String nombreArchivo = url.substring(url.lastIndexOf('/') + 1);
+            if (Files.exists(dir.resolve(nombreArchivo))) {
+                continue; // el archivo esta, no hay nada que hacer
+            }
+
+            String etiqueta = juego.getSeccion() != null ? juego.getSeccion().getNombre() : "Juego";
+            Color[] colores = PALETA[Math.floorMod(juego.getId().hashCode(), PALETA.length)];
+            String nuevaUrl = GeneradorPortadas.generar(dir, juego.getNombre(), etiqueta, colores[0], colores[1]);
+
+            if (nuevaUrl != null) {
+                juego.setImagenUrl(nuevaUrl);
+                juegoRepository.save(juego);
+                reparadas++;
+            }
+        }
+
+        if (reparadas > 0) {
+            System.out.println("Se regeneraron " + reparadas + " portada(s) que faltaban en disco.");
+        }
     }
 
     /**
