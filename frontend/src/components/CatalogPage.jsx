@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import api from '../api/client'
+import api, { resolveImageUrl } from '../api/client'
 
 export default function CatalogPage({ user, navigate, notify }) {
   const [juegos, setJuegos] = useState([])
@@ -59,7 +59,7 @@ export default function CatalogPage({ user, navigate, notify }) {
             <div className="card-juego" key={j.id}>
               <div className="card-imagen">
                 {j.imagenUrl ? (
-                  <img src={j.imagenUrl} alt={j.nombre} />
+                  <img src={resolveImageUrl(j.imagenUrl)} alt={j.nombre} />
                 ) : (
                   <div className="sin-imagen">Sin imagen</div>
                 )}

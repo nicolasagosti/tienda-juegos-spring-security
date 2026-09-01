@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import api from '../api/client'
+import api, { resolveImageUrl } from '../api/client'
 
 export default function GameFormPage({ gameId, navigate, notify }) {
   const esNuevo = !gameId
@@ -108,7 +108,7 @@ export default function GameFormPage({ gameId, navigate, notify }) {
         {imagenActual && !archivo && (
           <>
             <p className="hint">Imagen actual:</p>
-            <img src={imagenActual} className="preview-actual" alt="actual" />
+            <img src={resolveImageUrl(imagenActual)} className="preview-actual" alt="actual" />
           </>
         )}
 
