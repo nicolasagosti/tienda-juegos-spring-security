@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Usuarios - GameStore</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<nav th:replace="~{fragments :: nav}"></nav>
+<main class="container">
+    <div th:replace="~{fragments :: alertas}"></div>
+
+    <div class="page-header">
+        <h1>Usuarios</h1>
+        <a th:href="@{/admin/usuarios/nuevo}" class="btn btn-primary">+ Nuevo usuario</a>
+    </div>
+
+    <div class="tabla-wrap">
+        <table class="tabla">
+            <thead>
+            <tr>
+                <th>Usuario</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Categoria</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="u : ${usuarios}">
+                <td th:text="${u.username}">usuario</td>
+                <td th:text="${u.nombreCompleto}">Nombre</td>
+                <td th:text="${u.email}">email</td>
+                <td>
+                    <span class="badge badge-admin" th:if="${u.rol.name() == 'ADMIN'}" th:text="${u.rol}"></span>
+                    <span class="badge badge-vendedor" th:if="${u.rol.name() == 'VENDEDOR'}" th:text="${u.rol}"></span>
+                    <span class="badge badge-comprador" th:if="${u.rol.name() == 'COMPRADOR'}" th:text="${u.rol}"></span>
+                </td>
+                <td>
+                    <span th:if="${u.habilitado}" class="estado-ok">Habilitado</span>
+                    <span th:unless="${u.habilitado}" class="estado-bloqueado">Deshabilitado</span>
+                </td>
+                <td class="acciones">
+                    <a th:href="@{/admin/usuarios/editar/{id}(id=${u.id})}" class="btn btn-secondary btn-sm">Editar</a>
+                    <form th:action="@{/admin/usuarios/{id}/toggle(id=${u.id})}" method="post" class="inline-form">
+                        <button type="submit" class="btn btn-sm"
+                                th:text="${u.habilitado} ? 'Deshabilitar' : 'Habilitar'">toggle</button>
+                    </form>
+                    <form th:action="@{/admin/usuarios/{id}/eliminar(id=${u.id})}" method="post" class="inline-form"
+                          onsubmit="return confirm('Seguro que queres eliminar este usuario?');">
+                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

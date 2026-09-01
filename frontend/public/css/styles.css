@@ -1,0 +1,391 @@
+/* ==========================================================
+   GameStore - Demo Spring Security (UI clasica en Thymeleaf)
+   Hoja de estilos unica, sin dependencias externas.
+
+   NOTA: este archivo vive en frontend/public/css/ (no en
+   src/main/resources/static directamente) porque "npm run build"
+   limpia esa carpeta entera antes de generar el bundle de React
+   (emptyOutDir: true). Vite copia todo lo que hay en /public tal
+   cual al resultado final, asi que este css sigue disponible en
+   /css/styles.css para las paginas Thymeleaf despues de cada build.
+   ========================================================== */
+
+:root {
+    --bg: #0f1220;
+    --bg-card: #1a1f38;
+    --bg-card-hover: #212748;
+    --border: #2c3358;
+    --text: #e7e9f5;
+    --text-muted: #9aa0c3;
+    --primary: #6c5ce7;
+    --primary-hover: #5a4bd1;
+    --secondary: #33395c;
+    --danger: #e74c3c;
+    --danger-hover: #c0392b;
+    --success: #2ecc71;
+    --error: #e74c3c;
+    --admin: #e67e22;
+    --vendedor: #6c5ce7;
+    --comprador: #2ecc71;
+    --radius: 10px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: "Segoe UI", Roboto, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+a { color: inherit; text-decoration: none; }
+
+/* ---------- Navbar ---------- */
+.navbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding: 14px 28px;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.navbar-brand a {
+    font-size: 1.3rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    color: var(--primary);
+}
+
+.navbar-links {
+    display: flex;
+    gap: 18px;
+    flex-wrap: wrap;
+}
+
+.navbar-links a {
+    color: var(--text-muted);
+    font-weight: 500;
+    padding: 6px 4px;
+    border-bottom: 2px solid transparent;
+}
+
+.navbar-links a:hover {
+    color: var(--text);
+    border-bottom-color: var(--primary);
+}
+
+.navbar-user {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.username {
+    font-weight: 600;
+}
+
+.logout-form { margin: 0; }
+
+.btn-logout {
+    background: var(--secondary);
+    color: var(--text);
+    border: none;
+    padding: 6px 14px;
+    border-radius: var(--radius);
+    cursor: pointer;
+}
+
+.btn-logout:hover { background: var(--danger); }
+
+/* ---------- Layout ---------- */
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 32px 24px 60px;
+}
+
+.container-form {
+    max-width: 620px;
+}
+
+.page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+h1 { margin: 0 0 6px; }
+.subtitle-page { color: var(--text-muted); margin-top: 0; }
+
+/* ---------- Badges de rol ---------- */
+.badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    background: var(--secondary);
+}
+
+.badge-admin { background: color-mix(in srgb, var(--admin) 25%, transparent); color: var(--admin); }
+.badge-vendedor { background: color-mix(in srgb, var(--vendedor) 25%, transparent); color: #a29bfe; }
+.badge-comprador { background: color-mix(in srgb, var(--comprador) 25%, transparent); color: var(--comprador); }
+
+/* ---------- Alertas ---------- */
+.alert {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    margin-bottom: 18px;
+    font-weight: 500;
+}
+
+.alert-success { background: color-mix(in srgb, var(--success) 18%, transparent); color: #55efc4; border: 1px solid color-mix(in srgb, var(--success) 40%, transparent); }
+.alert-error { background: color-mix(in srgb, var(--error) 18%, transparent); color: #ff7675; border: 1px solid color-mix(in srgb, var(--error) 40%, transparent); }
+
+.info-banner {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--comprador);
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    color: var(--text-muted);
+    margin-bottom: 20px;
+}
+
+/* ---------- Botones ---------- */
+.btn {
+    display: inline-block;
+    padding: 9px 18px;
+    border-radius: var(--radius);
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    font-size: 0.92rem;
+}
+
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover { background: var(--primary-hover); }
+
+.btn-secondary { background: var(--secondary); color: var(--text); }
+.btn-secondary:hover { background: #3d4570; }
+
+.btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+.btn-danger:hover { background: var(--danger); color: #fff; }
+
+.btn-sm { padding: 5px 11px; font-size: 0.8rem; }
+.btn-block { width: 100%; }
+
+.inline-form { display: inline-block; margin: 0; }
+
+/* ---------- Catalogo de juegos ---------- */
+.grid-juegos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 20px;
+}
+
+.card-juego {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform .15s ease, background .15s ease;
+}
+
+.card-juego:hover {
+    background: var(--bg-card-hover);
+    transform: translateY(-2px);
+}
+
+.card-imagen {
+    height: 150px;
+    background: #10142a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.card-imagen img { width: 100%; height: 100%; object-fit: cover; }
+.sin-imagen { color: var(--text-muted); font-size: 0.85rem; }
+
+.card-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+.card-body h3 { margin: 0; font-size: 1.05rem; }
+.precio { color: var(--comprador); font-weight: 700; margin: 0; }
+.descripcion { color: var(--text-muted); font-size: 0.85rem; margin: 0; min-height: 32px; }
+
+.meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin: 4px 0 0;
+}
+
+.tag {
+    background: var(--secondary);
+    padding: 2px 9px;
+    border-radius: 999px;
+}
+
+.card-actions { display: flex; gap: 8px; margin-top: 8px; }
+.empty { color: var(--text-muted); padding: 30px 0; }
+
+/* ---------- Formularios ---------- */
+.form-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 22px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.form-card label { font-size: 0.85rem; color: var(--text-muted); margin-top: 10px; }
+
+.form-card input[type="text"],
+.form-card input[type="password"],
+.form-card input[type="email"],
+.form-card input[type="number"],
+.form-card input[type="file"],
+.form-card select,
+.form-card textarea {
+    background: #10142a;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+}
+
+.form-card textarea { resize: vertical; }
+
+.checkbox-row { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+.checkbox-row label { margin: 0; }
+
+.form-actions { display: flex; gap: 10px; margin-top: 18px; }
+
+.form-inline {
+    flex-direction: row;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+
+.form-inline input { flex: 1; min-width: 180px; margin-top: 0; }
+
+.preview-actual {
+    max-width: 160px;
+    border-radius: 8px;
+    margin-top: 6px;
+    border: 1px solid var(--border);
+}
+
+.hint { font-size: 0.8rem; color: var(--text-muted); margin: 10px 0 0; }
+
+/* ---------- Login ---------- */
+.login-body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(circle at top, #171c38, #0b0d1a);
+}
+
+.login-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 36px 40px;
+    width: 380px;
+    text-align: center;
+}
+
+.login-card h1 { color: var(--primary); margin-bottom: 2px; }
+.subtitle { color: var(--text-muted); margin-top: 0; font-size: 0.85rem; }
+
+.login-form { text-align: left; display: flex; flex-direction: column; gap: 4px; margin-top: 18px; }
+.login-form label { font-size: 0.85rem; color: var(--text-muted); margin-top: 10px; }
+
+.login-form input {
+    background: #10142a;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 12px;
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+.login-form button { margin-top: 18px; }
+
+.demo-users {
+    text-align: left;
+    margin-top: 26px;
+    padding-top: 18px;
+    border-top: 1px solid var(--border);
+}
+
+.demo-users h3 { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; }
+.demo-users ul { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 6px; }
+.demo-users li { font-size: 0.82rem; display: flex; align-items: center; gap: 8px; }
+
+/* ---------- Panel admin ---------- */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 14px;
+    margin: 20px 0 32px;
+}
+
+.stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stat-num { font-size: 1.8rem; font-weight: 700; color: var(--primary); }
+.stat-label { font-size: 0.8rem; color: var(--text-muted); }
+
+.admin-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+
+/* ---------- Tablas ---------- */
+.tabla-wrap { overflow-x: auto; }
+
+.tabla {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+}
+
+.tabla th, .tabla td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.9rem;
+}
+
+.tabla th { color: var(--text-muted); font-weight: 600; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.4px; }
+.tabla tr:last-child td { border-bottom: none; }
+.acciones { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.estado-ok { color: var(--comprador); font-weight: 600; }
+.estado-bloqueado { color: var(--danger); font-weight: 600; }

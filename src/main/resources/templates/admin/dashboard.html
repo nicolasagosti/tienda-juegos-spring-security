@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de administracion - GameStore</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<nav th:replace="~{fragments :: nav}"></nav>
+<main class="container">
+    <h1>Panel de administracion</h1>
+    <p class="subtitle-page">Solo visible para usuarios con categoria ADMIN (protegido por SecurityConfig + @PreAuthorize).</p>
+
+    <div class="stats-grid">
+        <div class="stat-card"><span class="stat-num" th:text="${totalUsuarios}">0</span><span class="stat-label">Usuarios totales</span></div>
+        <div class="stat-card"><span class="stat-num" th:text="${totalAdmins}">0</span><span class="stat-label">Admins</span></div>
+        <div class="stat-card"><span class="stat-num" th:text="${totalVendedores}">0</span><span class="stat-label">Vendedores</span></div>
+        <div class="stat-card"><span class="stat-num" th:text="${totalCompradores}">0</span><span class="stat-label">Compradores</span></div>
+        <div class="stat-card"><span class="stat-num" th:text="${totalJuegos}">0</span><span class="stat-label">Juegos publicados</span></div>
+        <div class="stat-card"><span class="stat-num" th:text="${totalSecciones}">0</span><span class="stat-label">Secciones</span></div>
+    </div>
+
+    <h2>Funciones de administrador</h2>
+    <div class="admin-actions">
+        <a th:href="@{/admin/usuarios/nuevo}" class="btn btn-primary">+ Crear usuario y asignar categoria</a>
+        <a th:href="@{/admin/usuarios}" class="btn btn-secondary">Gestionar usuarios (editar / habilitar / eliminar)</a>
+        <a th:href="@{/admin/secciones}" class="btn btn-secondary">Crear / eliminar secciones</a>
+        <a th:href="@{/juegos}" class="btn btn-secondary">Moderar catalogo (editar o eliminar cualquier juego)</a>
+    </div>
+</main>
+</body>
+</html>

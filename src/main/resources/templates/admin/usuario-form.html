@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title th:text="${esNuevo} ? 'Nuevo usuario - GameStore' : 'Editar usuario - GameStore'">Formulario</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<nav th:replace="~{fragments :: nav}"></nav>
+<main class="container container-form">
+    <h1 th:text="${esNuevo} ? 'Crear nuevo usuario' : 'Editar usuario'">Formulario</h1>
+    <p class="subtitle-page" th:if="${esNuevo}">Al crearlo le asignas directamente una categoria (rol).</p>
+
+    <form th:action="${esNuevo} ? @{/admin/usuarios/guardar} : @{/admin/usuarios/{id}/guardar(id=${usuario.id})}"
+          method="post" class="form-card">
+
+        <label for="username">Usuario (login)</label>
+        <input type="text" id="username" name="username" th:value="${usuario.username}"
+               th:readonly="${!esNuevo}" required="required">
+
+        <label for="password" th:if="${esNuevo}">Contraseña</label>
+        <input type="password" id="password" name="password" th:if="${esNuevo}" required="required">
+
+        <label for="nuevaPassword" th:unless="${esNuevo}">Nueva contraseña (dejar vacio para no cambiarla)</label>
+        <input type="password" id="nuevaPassword" name="nuevaPassword" th:unless="${esNuevo}">
+
+        <label for="nombreCompleto">Nombre completo</label>
+        <input type="text" id="nombreCompleto" name="nombreCompleto" th:value="${usuario.nombreCompleto}" required="required">
+
+        <label for="email">Email</label>
+        <input type="email" id="email" name="email" th:value="${usuario.email}" required="required">
+
+        <label for="rol">Categoria (rol)</label>
+        <select id="rol" name="rol" required="required">
+            <option th:each="r : ${roles}" th:value="${r}" th:text="${r}" th:selected="${usuario.rol == r}"></option>
+        </select>
+
+        <div class="checkbox-row" th:unless="${esNuevo}">
+            <input type="checkbox" id="habilitado" name="habilitado" value="true" th:checked="${usuario.habilitado}">
+            <label for="habilitado">Cuenta habilitada</label>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Guardar</button>
+            <a th:href="@{/admin/usuarios}" class="btn btn-secondary">Cancelar</a>
+        </div>
+    </form>
+</main>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Secciones - GameStore</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<nav th:replace="~{fragments :: nav}"></nav>
+<main class="container">
+    <div th:replace="~{fragments :: alertas}"></div>
+    <h1>Secciones del catalogo</h1>
+    <p class="subtitle-page">Las secciones son las categorias en las que los vendedores clasifican sus juegos.</p>
+
+    <form th:action="@{/admin/secciones/guardar}" method="post" class="form-card form-inline">
+        <input type="text" name="nombre" placeholder="Nombre de la seccion" required="required">
+        <input type="text" name="descripcion" placeholder="Descripcion (opcional)">
+        <button type="submit" class="btn btn-primary">+ Crear seccion</button>
+    </form>
+
+    <div class="tabla-wrap">
+        <table class="tabla">
+            <thead>
+            <tr><th>Nombre</th><th>Descripcion</th><th>Acciones</th></tr>
+            </thead>
+            <tbody>
+            <tr th:each="s : ${secciones}">
+                <td th:text="${s.nombre}">Nombre</td>
+                <td th:text="${s.descripcion}">Descripcion</td>
+                <td>
+                    <form th:action="@{/admin/secciones/{id}/eliminar(id=${s.id})}" method="post"
+                          onsubmit="return confirm('Seguro que queres eliminar esta seccion?');">
+                        <button type="submit" class="btn btn-danger btn-sm">Eliminar</button>
+                    </form>
+                </td>
+            </tr>
+            </tbody>
+        </table>
+    </div>
+</main>
+</body>
+</html>

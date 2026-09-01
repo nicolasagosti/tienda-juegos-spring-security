@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Ingresar - GameStore</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body class="login-body">
+    <div class="login-card">
+        <h1>GameStore</h1>
+        <p class="subtitle">Demo de Spring Security &mdash; login + 3 roles</p>
+
+        <div class="alert alert-error" th:if="${param.error}">Usuario o contraseña incorrectos, o la cuenta esta deshabilitada.</div>
+        <div class="alert alert-success" th:if="${param.logout}">Sesion cerrada correctamente.</div>
+
+        <form th:action="@{/login}" method="post" class="login-form">
+            <label for="username">Usuario</label>
+            <input type="text" id="username" name="username" autofocus="autofocus" required="required">
+
+            <label for="password">Contraseña</label>
+            <input type="password" id="password" name="password" required="required">
+
+            <button type="submit" class="btn btn-primary btn-block">Ingresar</button>
+        </form>
+
+        <div class="demo-users">
+            <h3>Usuarios de prueba</h3>
+            <ul>
+                <li><strong>admin</strong> / admin123 <span class="badge badge-admin">ADMIN</span></li>
+                <li><strong>vendedor1</strong> / vendedor123 <span class="badge badge-vendedor">VENDEDOR</span></li>
+                <li><strong>vendedor2</strong> / vendedor123 <span class="badge badge-vendedor">VENDEDOR</span></li>
+                <li><strong>comprador1</strong> / comprador123 <span class="badge badge-comprador">COMPRADOR</span></li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

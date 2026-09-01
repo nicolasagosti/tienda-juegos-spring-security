@@ -1,0 +1,8 @@
+target
+frontend
+uploads/*
+!uploads/.gitkeep
+.git
+.idea
+*.iml
+.vscode

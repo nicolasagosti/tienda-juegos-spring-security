@@ -1,0 +1,20 @@
+target/
+*.class
+*.log
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+uploads/*
+!uploads/.gitkeep
+HELP.md
+
+# Frontend (React/Vite)
+frontend/node_modules/
+frontend/dist/
+# El build de Vite se genera directo en src/main/resources/static:
+# no lo versionamos, se regenera con "npm run build".
+src/main/resources/static/*
+!src/main/resources/static/.gitkeep
