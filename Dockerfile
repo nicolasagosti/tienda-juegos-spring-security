@@ -23,8 +23,13 @@ RUN mvn -B -q dependency:go-offline
 COPY src ./src
 RUN mvn -B -q clean package -DskipTests
 
-# ---- Etapa 2: imagen final, liviana, solo el JRE ----
-FROM eclipse-temurin:21-jre-alpine
+# ---- Etapa 2: imagen final, solo el JRE ----
+# OJO: se probo primero con "eclipse-temurin:21-jre-alpine" (mas liviana)
+# pero su truststore de certificados TLS/SSL viene incompleto en algunos
+# builds, y como Neon exige SSL (sslmode=require) la conexion a la base
+# fallaba en produccion (aunque funcionaba perfecto fuera de Alpine). Se
+# uso la variante "jammy" (basada en Debian/Ubuntu), sin ese problema.
+FROM eclipse-temurin:21-jre-jammy
 WORKDIR /app
 
 COPY --from=build /app/target/*.jar app.jar
