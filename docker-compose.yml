@@ -1,0 +1,158 @@
+# ==========================================================
+# Tienda de juegos - version microservicios.
+#
+#   docker compose up --build
+#   -> http://localhost:8080  (gateway: sirve React + rutea /api/**)
+#
+# Antes de la primera vez conviene compilar el frontend para que el
+# gateway tenga algo que servir en "/":
+#   cd frontend && npm install && npm run build && cd ..
+# (deja el build en services/api-gateway/src/main/resources/static)
+#
+# Cada servicio tiene su propia base Postgres. El perfil "docker" de cada
+# app (application-docker.properties / .yml) toma estas variables.
+# ==========================================================
+name: gamestore
+
+x-service-build: &service-build
+  context: ./services
+  dockerfile: Dockerfile
+
+services:
+  # ---------- Bases de datos (una por servicio) ----------
+  auth-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: authdb
+      POSTGRES_USER: auth
+      POSTGRES_PASSWORD: auth
+    volumes: [auth-db-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auth -d authdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  usuarios-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: usuariosdb
+      POSTGRES_USER: usuarios
+      POSTGRES_PASSWORD: usuarios
+    volumes: [usuarios-db-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U usuarios -d usuariosdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  catalogo-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: catalogodb
+      POSTGRES_USER: catalogo
+      POSTGRES_PASSWORD: catalogo
+    volumes: [catalogo-db-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catalogo -d catalogodb"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # ---------- Servicios ----------
+  usuarios-service:
+    build:
+      <<: *service-build
+      args:
+        SERVICE: usuarios-service
+    environment:
+      DATABASE_URL: jdbc:postgresql://usuarios-db:5432/usuariosdb
+      DATABASE_USERNAME: usuarios
+      DATABASE_PASSWORD: usuarios
+      AUTH_URL: http://auth-service:8081
+      CATALOGO_URL: http://catalogo-service:8083
+      INTERNAL_SECRET: ${INTERNAL_SECRET:-dev-internal-secret-cambiar-en-prod}
+    depends_on:
+      usuarios-db: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 40s
+
+  auth-service:
+    build:
+      <<: *service-build
+      args:
+        SERVICE: auth-service
+    environment:
+      DATABASE_URL: jdbc:postgresql://auth-db:5432/authdb
+      DATABASE_USERNAME: auth
+      DATABASE_PASSWORD: auth
+      USUARIOS_URL: http://usuarios-service:8082
+      INTERNAL_SECRET: ${INTERNAL_SECRET:-dev-internal-secret-cambiar-en-prod}
+      CORS_ALLOWED_ORIGINS: http://localhost:8080
+      FRONTEND_URL: http://localhost:8080
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    depends_on:
+      auth-db: { condition: service_healthy }
+      usuarios-service: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 40s
+
+  catalogo-service:
+    build:
+      <<: *service-build
+      args:
+        SERVICE: catalogo-service
+    environment:
+      DATABASE_URL: jdbc:postgresql://catalogo-db:5432/catalogodb
+      DATABASE_USERNAME: catalogo
+      DATABASE_PASSWORD: catalogo
+      USUARIOS_URL: http://usuarios-service:8082
+      INTERNAL_SECRET: ${INTERNAL_SECRET:-dev-internal-secret-cambiar-en-prod}
+      UPLOAD_DIR: /data/uploads
+    volumes: [catalogo-uploads:/data/uploads]
+    depends_on:
+      catalogo-db: { condition: service_healthy }
+      usuarios-service: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8083/actuator/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 40s
+
+  api-gateway:
+    build:
+      <<: *service-build
+      args:
+        SERVICE: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      SERVICES_AUTH_URL: http://auth-service:8081
+      SERVICES_USUARIOS_URL: http://usuarios-service:8082
+      SERVICES_CATALOGO_URL: http://catalogo-service:8083
+    depends_on:
+      auth-service: { condition: service_healthy }
+      usuarios-service: { condition: service_healthy }
+      catalogo-service: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
+
+volumes:
+  auth-db-data:
+  usuarios-db-data:
+  catalogo-db-data:
+  catalogo-uploads:

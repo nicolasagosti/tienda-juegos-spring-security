@@ -5,28 +5,32 @@ import path from 'node:path'
 // Dos formas de compilar este frontend:
 //
 //  - "embebido" (modo por defecto, uso local): el resultado se copia
-//    directo adentro del backend Spring Boot
-//    (src/main/resources/static), para correr todo en un solo proceso y
-//    un solo puerto, sin CORS de por medio.
+//    adentro del api-gateway (services/api-gateway/src/main/resources/static),
+//    que lo sirve en "/" y rutea /api/** a los microservicios. Un solo
+//    puerto (8080) para todo.
 //
 //  - "standalone" (VITE_STANDALONE_BUILD=true, el que usa Vercel): el
-//    resultado queda en ./dist, como cualquier proyecto Vite comun, listo
-//    para desplegarse separado del backend. En ese modo el frontend le
-//    habla a la API por HTTP a otro dominio (ver VITE_API_BASE_URL en
-//    src/api/client.js) usando JWT en vez de cookies de sesion.
+//    resultado queda en ./dist, listo para desplegarse separado. En ese
+//    modo el frontend le habla al gateway por HTTP a otro dominio (ver
+//    VITE_API_BASE_URL en src/api/client.js) con JWT.
 const standalone = process.env.VITE_STANDALONE_BUILD === 'true'
+
+const gatewayStatic = path.resolve(
+  import.meta.dirname,
+  '../services/api-gateway/src/main/resources/static',
+)
 
 export default defineConfig({
   plugins: [react()],
   build: {
-    outDir: standalone ? 'dist' : path.resolve(import.meta.dirname, '../src/main/resources/static'),
+    outDir: standalone ? 'dist' : gatewayStatic,
     emptyOutDir: true,
   },
   server: {
-    // Solo se usa corriendo "npm run dev" contra el backend ya levantado en otro puerto.
+    // Solo se usa corriendo "npm run dev": pega contra el gateway (:8080).
     proxy: {
-      '/api': 'http://localhost:8081',
-      '/uploads': 'http://localhost:8081',
+      '/api': 'http://localhost:8080',
+      '/uploads': 'http://localhost:8080',
     },
   },
 })
