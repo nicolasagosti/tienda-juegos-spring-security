@@ -1,6 +1,9 @@
 target/
 *.class
 *.log
+
+# Secretos de despliegue (ver .env.prod.example)
+.env
 .idea/
 *.iml
 .vscode/

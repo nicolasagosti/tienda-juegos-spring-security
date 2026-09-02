@@ -12,13 +12,15 @@ spring:
 
   cloud:
     gateway:
-      # CORS: para cuando el React corre aparte en "npm run dev" (:5173).
+      # CORS: origenes permitidos para /api/**. En dev alcanza con localhost
+      # (React embebido, o "npm run dev" en :5173). En prod se pasa la URL
+      # del frontend en Vercel por variable de entorno GATEWAY_ALLOWED_ORIGINS
+      # (coma-separada; admite comodines, ej "https://tu-app-*.vercel.app"
+      # para las preview deployments).
       globalcors:
         cors-configurations:
           '[/**]':
-            allowed-origins:
-              - "http://localhost:5173"
-              - "http://localhost:8080"
+            allowed-origin-patterns: ${GATEWAY_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:8080}
             allowed-methods: [GET, POST, PUT, DELETE, OPTIONS]
             allowed-headers: [Authorization, Content-Type]
             allow-credentials: false
@@ -44,10 +46,12 @@ spring:
             - Path=/uploads/**
 
 # --- JWT: solo la clave publica; el gateway solo valida ---
+# En prod se monta la clave real y se apunta con APP_JWT_PUBLIC_KEY_LOCATION
+# (ej. file:/run/keys/jwt-public.pem). Por defecto usa la del classpath (demo).
 app:
   jwt:
-    public-key-location: classpath:jwt-public.pem
-    issuer: gamestore-auth
+    public-key-location: ${APP_JWT_PUBLIC_KEY_LOCATION:classpath:jwt-public.pem}
+    issuer: ${APP_JWT_ISSUER:gamestore-auth}
 
 management:
   endpoints:

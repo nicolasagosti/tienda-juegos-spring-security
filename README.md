@@ -72,6 +72,14 @@ servicios (perfil `docker`) y publica solo el gateway en **http://localhost:8080
 El arranque está ordenado con healthchecks (`usuarios-service` antes que
 `auth-service`, gateway al final).
 
+## Desplegarlo (frontend en Vercel + backend en un VPS)
+
+Vercel no puede correr los servicios Spring Boot ni los Postgres. El frontend va
+a Vercel como hasta ahora; el backend (los 4 servicios + 3 bases) se levanta en
+un VPS con `docker-compose.prod.yml` (Caddy delante, HTTPS automático) y el
+frontend apunta a esa URL con `VITE_API_BASE_URL`. Guía paso a paso:
+**[DEPLOY.md](DEPLOY.md)**.
+
 ## Usuarios de prueba
 
 Se recrean en cada arranque (bases en memoria / volúmenes nuevos):

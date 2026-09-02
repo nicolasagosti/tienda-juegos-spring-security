@@ -1,0 +1,19 @@
+# Reverse proxy + HTTPS automatico (Let's Encrypt) delante del api-gateway.
+# Caddy es el UNICO servicio con puertos publicos (80/443). El dominio y el
+# email salen de las variables DOMAIN / TLS_EMAIL (ver .env).
+
+{
+	email {$TLS_EMAIL}
+}
+
+{$DOMAIN} {
+	encode gzip
+
+	# Todo va al gateway; el gateway decide (/api/**, /uploads/**, etc.).
+	reverse_proxy api-gateway:8080
+
+	log {
+		output stdout
+		format console
+	}
+}
