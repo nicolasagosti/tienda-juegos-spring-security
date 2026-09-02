@@ -92,7 +92,6 @@ services:
       DATABASE_PASSWORD: auth
       USUARIOS_URL: http://usuarios-service:8082
       INTERNAL_SECRET: ${INTERNAL_SECRET:-dev-internal-secret-cambiar-en-prod}
-      CORS_ALLOWED_ORIGINS: http://localhost:8080
       FRONTEND_URL: http://localhost:8080
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}

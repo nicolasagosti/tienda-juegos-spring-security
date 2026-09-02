@@ -40,23 +40,37 @@ próximos pasos): **[MICROSERVICES.md](MICROSERVICES.md)**.
 Requiere **Java 21** y **Node 18+**. Cada servicio usa **H2 en memoria** por
 defecto (perfil `dev`), igual que el monolito.
 
-```bash
-# 1) Compilar todo el reactor (deja los fat-jar en services/*/target)
-mvn -f services/pom.xml -DskipTests package
+### Windows (scripts)
 
-# 2) Compilar el frontend (se copia dentro del gateway)
+```cmd
+scripts\build.bat      :: Maven + npm build (una vez)
+scripts\run-dev.bat    :: levanta los 4 servicios en ventanas separadas
+```
+
+Abrí **http://localhost:18080** (`admin` / `admin123`). Los scripts usan los
+puertos **18080–18083** para no chocar con Jenkins u otra cosa que ya esté en
+8080/8081. Para frenar: cerrá las 4 ventanas.
+
+### A mano (cualquier SO)
+
+```bash
+# 1) Compilar el reactor (fat-jar en services/*/target) y el frontend
+mvn -f services/pom.xml -DskipTests package
 cd frontend && npm install && npm run build && cd ..
 
-# 3) Levantar los servicios — en 4 terminales, o con & — EN ESTE ORDEN:
+# 2) Levantar los 4 servicios (4 terminales, o con &). El gateway
+#    necesita saber dónde está cada uno si no usás los puertos por defecto.
 java -jar services/usuarios-service/target/usuarios-service.jar   # :8082
 java -jar services/catalogo-service/target/catalogo-service.jar   # :8083
 java -jar services/auth-service/target/auth-service.jar           # :8081
 java -jar services/api-gateway/target/api-gateway.jar             # :8080
 ```
 
-Abrí **http://localhost:8080**.
+Abrí **http://localhost:8080**. Si el 8080 está ocupado, corré cada servicio en
+otro puerto con `--server.port=...` y pasale al gateway
+`--SERVICES_AUTH_URL=`, `--SERVICES_USUARIOS_URL=`, `--SERVICES_CATALOGO_URL=`
+(es lo que hace `scripts/run-dev.bat`).
 
-Durante el desarrollo del backend también sirve `mvn -f services/<modulo> spring-boot:run`.
 Para hot-reload del frontend: `cd frontend && npm run dev` (Vite en :5173, con
 proxy al gateway).
 

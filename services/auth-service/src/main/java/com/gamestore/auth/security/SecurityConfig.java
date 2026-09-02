@@ -20,12 +20,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * Seguridad de auth-service. Dos "puertas":
@@ -36,15 +30,19 @@ import java.util.List;
  *  - {@code /internal/**}: solo para otros servicios, detras de
  *    InternalTokenFilter (header X-Internal-Token).
  *
+ * CORS: NO se configura aca a proposito. El unico que habla con navegadores
+ * es el api-gateway (y el es quien maneja CORS). A auth-service solo le
+ * llegan: llamadas server-to-server desde el gateway (sin CORS), el proxy
+ * de Vite en "npm run dev" (server-side, sin CORS) y el flujo de redirects
+ * de Google OAuth (navegacion top-level, tampoco CORS). Si auth-service
+ * validara Origin, rechazaria el header que el gateway le reenvia -> 403.
+ *
  * El login con Google necesita sesion HTTP para su flujo de redirects, por
  * eso IF_REQUIRED y no STATELESS (igual que el monolito).
  */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
-
-    @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:8080}")
-    private String corsAllowedOrigins;
 
     @Value("${app.internal.secret}")
     private String internalSecret;
@@ -76,23 +74,11 @@ public class SecurityConfig {
     }
 
     @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOriginPatterns(Arrays.asList(corsAllowedOrigins.split(",")));
-        config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-        config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
-        config.setAllowCredentials(false);
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/api/**", config);
-        return source;
-    }
-
-    @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
                                            JwtAuthenticationFilter jwtAuthenticationFilter,
                                            OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler) throws Exception {
         http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .cors(cors -> cors.disable())
             .csrf(csrf -> csrf.disable())
             .formLogin(form -> form.disable())
             .httpBasic(basic -> basic.disable())

@@ -20,7 +20,12 @@ spring:
       globalcors:
         cors-configurations:
           '[/**]':
-            allowed-origin-patterns: ${GATEWAY_ALLOWED_ORIGINS:http://localhost:[*],http://127.0.0.1:[*]}
+            # Default "*" = cualquier origen (solo aplica en dev local: sirve el
+            # React desde el gateway en cualquier puerto sin pelear con CORS).
+            # allow-credentials es false y la API usa JWT en header, asi que
+            # aceptar cualquier origen no expone nada. En prod se OBLIGA a pasar
+            # GATEWAY_ALLOWED_ORIGINS con la URL de Vercel (ver docker-compose.prod.yml).
+            allowed-origin-patterns: ${GATEWAY_ALLOWED_ORIGINS:*}
             allowed-methods: [GET, POST, PUT, DELETE, OPTIONS]
             allowed-headers: [Authorization, Content-Type]
             allow-credentials: false
