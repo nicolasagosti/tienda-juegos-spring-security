@@ -2,6 +2,7 @@ package com.gamestore.usuarios;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 
 /**
  * usuarios-service: dueño del PERFIL y la AUTORIZACION del usuario
@@ -11,7 +12,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * - El ABM del ADMIN entra por aca; la parte de credencial se delega a
  *   auth-service (ver AuthClient).
  */
-@SpringBootApplication
+@SpringBootApplication(exclude = UserDetailsServiceAutoConfiguration.class) // no hay login usuario/pass: solo JWT
 public class UsuariosServiceApplication {
 
     public static void main(String[] args) {

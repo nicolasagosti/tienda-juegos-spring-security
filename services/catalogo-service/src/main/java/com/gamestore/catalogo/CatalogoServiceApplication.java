@@ -2,6 +2,7 @@ package com.gamestore.catalogo;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration;
 
 /**
  * catalogo-service: juegos y secciones.
@@ -11,7 +12,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * usuarios-service; para decidir "podes editar este juego" usa el
  * username/rol que vienen en el JWT.
  */
-@SpringBootApplication
+@SpringBootApplication(exclude = UserDetailsServiceAutoConfiguration.class) // no hay login usuario/pass: solo JWT
 public class CatalogoServiceApplication {
 
     public static void main(String[] args) {

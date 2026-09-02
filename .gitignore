@@ -16,10 +16,10 @@ HELP.md
 frontend/node_modules/
 frontend/dist/
 
-# El build de React embebido se genera dentro del gateway; no se versiona.
+# El build de React embebido se genera dentro del gateway; no se versiona
+# (ni el directorio: el gateway arranca igual sin el, ver SpaFallbackConfig).
 # Se regenera con "npm run build" (ver frontend/vite.config.js).
-services/api-gateway/src/main/resources/static/*
-!services/api-gateway/src/main/resources/static/.gitkeep
+services/api-gateway/src/main/resources/static/
 
 # Imagenes subidas en tiempo de ejecucion (catalogo-service, perfil dev).
 # La carpeta "uploads" se crea donde se ejecute el servicio (cwd).
