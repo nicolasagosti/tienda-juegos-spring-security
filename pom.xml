@@ -91,6 +91,18 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Login con Google (OAuth2 / OIDC) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
+
+        <!-- Codificacion Base32 para los secretos TOTP del 2FA (ver security/TotpService) -->
+        <dependency>
+            <groupId>commons-codec</groupId>
+            <artifactId>commons-codec</artifactId>
+        </dependency>
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>

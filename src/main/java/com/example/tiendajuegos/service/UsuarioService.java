@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Funciones que solo el ADMIN dispara desde el panel /admin:
@@ -73,5 +74,42 @@ public class UsuarioService {
 
     public long contarPorRol(Rol rol) {
         return usuarioRepository.findByRol(rol).size();
+    }
+
+    /**
+     * Se llama despues de un login exitoso con Google (ver
+     * OAuth2LoginSuccessHandler). Si ya existe un Usuario con ese email
+     * (por ejemplo, se registro antes con usuario/contraseña) lo
+     * reutiliza -- asi la misma persona entra a la misma cuenta sin
+     * importar el metodo de login. Si no existe, lo crea con rol
+     * COMPRADOR por defecto: es el rol mas restrictivo, nadie se puede
+     * "autopromover" a VENDEDOR o ADMIN entrando con Google.
+     *
+     * La contraseña que se guarda es un UUID random, jamas se le muestra
+     * a nadie: esta cuenta unicamente se puede usar entrando por Google.
+     */
+    @Transactional
+    public Usuario buscarOCrearDesdeGoogle(String email, String nombre) {
+        return usuarioRepository.findByEmail(email).orElseGet(() -> {
+            String usernameBase = email.substring(0, email.indexOf('@'));
+            String username = generarUsernameDisponible(usernameBase);
+            Usuario nuevo = new Usuario(
+                    username,
+                    passwordEncoder.encode(UUID.randomUUID().toString()),
+                    nombre != null ? nombre : username,
+                    email,
+                    Rol.COMPRADOR
+            );
+            return usuarioRepository.save(nuevo);
+        });
+    }
+
+    private String generarUsernameDisponible(String base) {
+        String candidato = base;
+        int sufijo = 1;
+        while (usuarioRepository.existsByUsername(candidato)) {
+            candidato = base + sufijo++;
+        }
+        return candidato;
     }
 }

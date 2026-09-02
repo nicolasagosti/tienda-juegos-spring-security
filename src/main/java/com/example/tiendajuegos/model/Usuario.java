@@ -4,6 +4,8 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "usuarios")
 public class Usuario {
@@ -36,6 +38,30 @@ public class Usuario {
     /** Permite al ADMIN deshabilitar una cuenta sin borrarla. */
     @Column(nullable = false)
     private boolean habilitado = true;
+
+    // ---------- Bloqueo automatico por intentos fallidos ----------
+    // Distinto de "habilitado": eso lo apaga el ADMIN a mano; esto lo
+    // maneja el propio sistema en respuesta a intentos de login fallidos
+    // (ver LoginAttemptListener). CustomUserDetails.isAccountNonLocked()
+    // usa "bloqueadoHasta" para que Spring Security rechace el login
+    // mientras dure el bloqueo, sin necesidad de tocar "habilitado".
+
+    @Column(name = "intentos_fallidos", nullable = false)
+    private int intentosFallidos = 0;
+
+    @Column(name = "bloqueado_hasta")
+    private LocalDateTime bloqueadoHasta;
+
+    // ---------- 2FA (TOTP) ----------
+    // totpSecret queda null hasta que el usuario arranca el setup; recien
+    // se marca totpHabilitado=true cuando confirma un codigo valido (asi
+    // no queda "a medio activar" si escanea el QR pero nunca confirma).
+
+    @Column(name = "totp_secret", length = 64)
+    private String totpSecret;
+
+    @Column(name = "totp_habilitado", nullable = false)
+    private boolean totpHabilitado = false;
 
     public Usuario() {
     }
@@ -102,5 +128,37 @@ public class Usuario {
 
     public void setHabilitado(boolean habilitado) {
         this.habilitado = habilitado;
+    }
+
+    public int getIntentosFallidos() {
+        return intentosFallidos;
+    }
+
+    public void setIntentosFallidos(int intentosFallidos) {
+        this.intentosFallidos = intentosFallidos;
+    }
+
+    public LocalDateTime getBloqueadoHasta() {
+        return bloqueadoHasta;
+    }
+
+    public void setBloqueadoHasta(LocalDateTime bloqueadoHasta) {
+        this.bloqueadoHasta = bloqueadoHasta;
+    }
+
+    public String getTotpSecret() {
+        return totpSecret;
+    }
+
+    public void setTotpSecret(String totpSecret) {
+        this.totpSecret = totpSecret;
+    }
+
+    public boolean isTotpHabilitado() {
+        return totpHabilitado;
+    }
+
+    public void setTotpHabilitado(boolean totpHabilitado) {
+        this.totpHabilitado = totpHabilitado;
     }
 }

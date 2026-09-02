@@ -41,7 +41,9 @@ export default function Navbar({ user, navigate, activeView, notify }) {
         )}
       </div>
       <div className="navbar-user">
-        <span className="username">{user.nombreCompleto}</span>
+        <button className={`username-btn${activeView === 'security' ? ' link-btn-active' : ''}`} onClick={() => navigate('security')} title="Mi cuenta / 2FA">
+          {user.nombreCompleto}
+        </button>
         <span className={`badge ${ROLE_CLASS[user.rol]}`}>{user.rol}</span>
         <button className="btn-logout" onClick={handleLogout}>
           Salir

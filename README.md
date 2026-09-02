@@ -10,6 +10,13 @@ usuario** sobre una tienda de juegos de PC:
 | **VENDEDOR** | Ver el catálogo + publicar/editar/eliminar **sus propios** juegos (nombre, precio, imagen, sección) |
 | **ADMIN** | Todo lo anterior + crear usuarios y asignarles categoría, editar/habilitar/deshabilitar/eliminar cualquier usuario, crear/eliminar secciones (categorías del catálogo) y moderar (editar/eliminar) cualquier juego |
 
+## Seguridad implementada (más allá del login básico)
+
+- **Bloqueo por intentos fallidos**: 5 intentos seguidos con contraseña incorrecta bloquean la cuenta 15 minutos, sin que el ADMIN tenga que hacer nada (`LoginAttemptListener`).
+- **Refresh tokens con rotación**: el access token (JWT) dura 15 minutos; un refresh token de 7 días (guardado en la base, revocable) lo renueva solo. Cada uso rota el refresh token — reusar uno viejo lo invalida.
+- **2FA (TOTP)**: cualquier usuario puede activar verificación en dos pasos desde "Mi cuenta" (compatible con Google Authenticator, Authy, etc.), implementado a mano según RFC 6238.
+- **Login con Google (OAuth2/OIDC)**: opcional — funciona sin configurar nada (el botón simplemente queda inerte), se activa cargando credenciales de Google Cloud Console. Ver [DEPLOY.md](DEPLOY.md#6-login-con-google-opcional).
+
 ## Arquitectura
 
 El backend expone **dos interfaces sobre las mismas reglas de seguridad**:

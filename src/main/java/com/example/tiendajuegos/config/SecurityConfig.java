@@ -1,6 +1,7 @@
 package com.example.tiendajuegos.config;
 
 import com.example.tiendajuegos.security.JwtAuthenticationFilter;
+import com.example.tiendajuegos.security.OAuth2LoginSuccessHandler;
 import com.example.tiendajuegos.security.UsuarioDetailsServiceImpl;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
@@ -109,7 +110,9 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, JwtAuthenticationFilter jwtAuthenticationFilter) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http,
+                                            JwtAuthenticationFilter jwtAuthenticationFilter,
+                                            OAuth2LoginSuccessHandler oAuth2LoginSuccessHandler) throws Exception {
         AntPathRequestMatcher apiMatcher = new AntPathRequestMatcher("/api/**");
 
         http
@@ -122,6 +125,9 @@ public class SecurityConfig {
                 .requestMatchers("/css/**", "/js/**", "/uploads/**", "/webjars/**").permitAll()
                 .requestMatchers("/login", "/error", "/403").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
+                // Flujo de login con Google: Spring Security mapea estas rutas
+                // solas (OAuth2LoginConfigurer), solo hace falta permitirlas.
+                .requestMatchers("/oauth2/**", "/login/oauth2/**").permitAll()
 
                 // API de autenticacion: login/me/logout son publicos a nivel de URL;
                 // /me decide 200 vs 401 mirando el SecurityContext (poblado por
@@ -161,6 +167,19 @@ public class SecurityConfig {
                 .logoutUrl("/logout")
                 .logoutSuccessUrl("/login?logout")
                 .permitAll()
+            )
+
+            // --- Login con Google ---
+            // Es, por naturaleza, un flujo de redirects de navegador (Google
+            // no habla JSON/JWT con nosotros). OAuth2LoginSuccessHandler es
+            // el puente: una vez que Google confirma la identidad, generamos
+            // nuestros propios tokens y redirigimos de vuelta al frontend.
+            // Si GOOGLE_CLIENT_ID/SECRET no estan configurados (ver
+            // OAuth2ClientConfig), esto queda inerte sin romper el resto de
+            // la app: el boton de Google en el frontend simplemente no
+            // funcionaria hasta que se configuren.
+            .oauth2Login(oauth2 -> oauth2
+                .successHandler(oAuth2LoginSuccessHandler)
             )
 
             // --- Que responder cuando no hay sesion/token valido, o cuando el rol no alcanza ---

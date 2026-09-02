@@ -20,6 +20,12 @@ import java.util.Date;
  *    se define la variable de entorno JWT_SECRET, la app directamente no
  *    arranca. Es a proposito (fail-fast) para que nadie despliegue a
  *    produccion con el secreto de ejemplo.
+ *
+ * Vida CORTA a proposito (15 min por defecto): es el "access token". Si
+ * se filtra, la ventana de uso es chica. La sesion larga la sostiene el
+ * refresh token (RefreshTokenService), que vive en la base y SI se puede
+ * revocar -- a diferencia de este JWT, que una vez emitido es valido
+ * hasta que expira, lo sepamos o no.
  */
 @Component
 public class JwtService {
@@ -27,7 +33,7 @@ public class JwtService {
     @Value("${app.jwt.secret:demo-secret-solo-para-desarrollo-local-cambiar-en-produccion-123}")
     private String secretConfigurado;
 
-    @Value("${app.jwt.expiration-ms:86400000}") // 24 horas
+    @Value("${app.jwt.expiration-ms:900000}") // 15 minutos
     private long expiracionMs;
 
     private SecretKey key() {

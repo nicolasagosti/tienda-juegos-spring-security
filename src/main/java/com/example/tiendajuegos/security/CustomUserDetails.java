@@ -5,6 +5,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -45,9 +46,17 @@ public class CustomUserDetails implements UserDetails {
         return true;
     }
 
+    /**
+     * Distinto de isEnabled(): esto lo controla el propio sistema en
+     * respuesta a intentos de login fallidos (ver LoginAttemptListener),
+     * no el ADMIN a mano. DaoAuthenticationProvider revisa esto ANTES de
+     * comparar la contraseña, asi que una cuenta bloqueada rechaza el
+     * login aunque la contraseña sea correcta.
+     */
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        LocalDateTime bloqueadoHasta = usuario.getBloqueadoHasta();
+        return bloqueadoHasta == null || bloqueadoHasta.isBefore(LocalDateTime.now());
     }
 
     @Override

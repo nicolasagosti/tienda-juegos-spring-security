@@ -9,6 +9,7 @@ import AdminDashboard from './components/AdminDashboard'
 import AdminUsersPage from './components/AdminUsersPage'
 import UserFormPage from './components/UserFormPage'
 import AdminSectionsPage from './components/AdminSectionsPage'
+import SecurityPage from './components/SecurityPage'
 
 // Navegacion simple basada en estado (sin react-router): esta SPA vive
 // entera en "/" para no pisarse con las rutas del backend (que ademas
@@ -58,6 +59,7 @@ function Shell() {
           <UserFormPage userId={view.params.id} navigate={navigate} notify={notify} />
         )}
         {view.name === 'adminSections' && <AdminSectionsPage notify={notify} />}
+        {view.name === 'security' && <SecurityPage notify={notify} />}
       </main>
     </div>
   )

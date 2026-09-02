@@ -192,6 +192,23 @@ a {
     font-size: 0.92rem;
 }
 
+.username-btn {
+    font-weight: 600;
+    font-size: 0.92rem;
+    background: none;
+    border: none;
+    color: var(--text);
+    cursor: pointer;
+    padding: 6px 10px;
+    border-radius: var(--radius-sm);
+    transition: background 0.15s ease;
+}
+
+.username-btn:hover,
+.username-btn.link-btn-active {
+    background: var(--secondary);
+}
+
 .btn-logout {
     background: var(--secondary);
     color: var(--text);
@@ -617,6 +634,34 @@ h2 {
 
 .login-form button {
     margin-top: 20px;
+}
+
+.login-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    margin: 18px 0;
+    gap: 10px;
+}
+
+.login-divider::before,
+.login-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+}
+
+.btn-google {
+    background: #fff;
+    color: #3c4043;
+    border: 1px solid var(--border);
+}
+
+.btn-google:hover {
+    background: #f1f1f1;
 }
 
 .demo-users {
