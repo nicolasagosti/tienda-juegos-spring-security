@@ -14,8 +14,8 @@ on:
     branches: [main, develop]
 
 jobs:
-  backend:
-    name: Backend (Maven + tests)
+  services:
+    name: Microservicios (Maven reactor)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -27,8 +27,8 @@ jobs:
           java-version: '21'
           cache: maven
 
-      - name: Compilar y correr tests
-        run: mvn -B verify
+      - name: Compilar y empaquetar los 5 modulos
+        run: mvn -B -f services/pom.xml verify
 
   frontend:
     name: Frontend (React/Vite build)

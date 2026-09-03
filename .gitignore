@@ -1,20 +1,33 @@
 target/
 *.class
 *.log
+
+# Secretos de despliegue (ver .env.prod.example)
+.env
 .idea/
 *.iml
 .vscode/
 .settings/
 .classpath
 .project
-uploads/*
-!uploads/.gitkeep
 HELP.md
 
 # Frontend (React/Vite)
 frontend/node_modules/
 frontend/dist/
-# El build de Vite se genera directo en src/main/resources/static:
-# no lo versionamos, se regenera con "npm run build".
-src/main/resources/static/*
-!src/main/resources/static/.gitkeep
+
+# El build de React embebido se genera dentro del gateway; no se versiona
+# (ni el directorio: el gateway arranca igual sin el, ver SpaFallbackConfig).
+# Se regenera con "npm run build" (ver frontend/vite.config.js).
+services/api-gateway/src/main/resources/static/
+
+# Imagenes subidas en tiempo de ejecucion (catalogo-service, perfil dev).
+# La carpeta "uploads" se crea donde se ejecute el servicio (cwd).
+/uploads/
+services/catalogo-service/uploads/
+
+# --- Claves JWT de PRODUCCION ---
+# Las de la demo (keys/jwt-*.pem y las copias en cada servicio) SI se
+# versionan a proposito, igual que el "demo-secret" del monolito. Si
+# generas un par real para produccion, ignoralo:
+# keys/jwt-private.pem
