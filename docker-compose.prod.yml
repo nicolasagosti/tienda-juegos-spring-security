@@ -1,0 +1,197 @@
+# ==========================================================
+# Despliegue de PRODUCCION en un VPS (un solo host con Docker).
+#
+#   cp .env.prod.example .env      # y completar
+#   ./keys/generate-keys.sh        # claves JWT reales (NO commitear la privada)
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Diferencias con docker-compose.yml (dev):
+#   - Caddy adelante: unico servicio publico (80/443), HTTPS automatico.
+#   - El gateway NO publica puerto: solo Caddy llega a el.
+#   - Secretos y passwords por variables de entorno (.env), no hardcodeados.
+#   - Claves JWT montadas desde ./keys (no las de demo del classpath).
+#   - El FRONTEND NO se sirve aca: vive en Vercel y le pega a este gateway
+#     por /api/**. El gateway responde /api/** y /uploads/** nada mas.
+# ==========================================================
+name: gamestore-prod
+
+x-service-build: &service-build
+  context: ./services
+  dockerfile: Dockerfile
+
+x-jwt-keys: &jwt-keys
+  - ./keys:/run/keys:ro
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?falta DOMAIN en .env}
+      TLS_EMAIL: ${TLS_EMAIL:?falta TLS_EMAIL en .env}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    depends_on:
+      api-gateway: { condition: service_healthy }
+
+  # ---------- Bases de datos (una por servicio) ----------
+  auth-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: authdb
+      POSTGRES_USER: auth
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:?falta AUTH_DB_PASSWORD en .env}
+    volumes: [auth-db-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auth -d authdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  usuarios-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: usuariosdb
+      POSTGRES_USER: usuarios
+      POSTGRES_PASSWORD: ${USUARIOS_DB_PASSWORD:?falta USUARIOS_DB_PASSWORD en .env}
+    volumes: [usuarios-db-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U usuarios -d usuariosdb"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  catalogo-db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: catalogodb
+      POSTGRES_USER: catalogo
+      POSTGRES_PASSWORD: ${CATALOGO_DB_PASSWORD:?falta CATALOGO_DB_PASSWORD en .env}
+    volumes: [catalogo-db-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U catalogo -d catalogodb"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # ---------- Servicios ----------
+  usuarios-service:
+    build:
+      <<: *service-build
+      args:
+        SERVICE: usuarios-service
+    restart: unless-stopped
+    volumes: *jwt-keys
+    environment:
+      DATABASE_URL: jdbc:postgresql://usuarios-db:5432/usuariosdb
+      DATABASE_USERNAME: usuarios
+      DATABASE_PASSWORD: ${USUARIOS_DB_PASSWORD}
+      AUTH_URL: http://auth-service:8081
+      CATALOGO_URL: http://catalogo-service:8083
+      INTERNAL_SECRET: ${INTERNAL_SECRET:?falta INTERNAL_SECRET en .env}
+      APP_JWT_PUBLIC_KEY_LOCATION: file:/run/keys/jwt-public.pem
+    depends_on:
+      usuarios-db: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8082/actuator/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 40s
+
+  auth-service:
+    build:
+      <<: *service-build
+      args:
+        SERVICE: auth-service
+    restart: unless-stopped
+    volumes: *jwt-keys
+    environment:
+      DATABASE_URL: jdbc:postgresql://auth-db:5432/authdb
+      DATABASE_USERNAME: auth
+      DATABASE_PASSWORD: ${AUTH_DB_PASSWORD}
+      USUARIOS_URL: http://usuarios-service:8082
+      INTERNAL_SECRET: ${INTERNAL_SECRET}
+      APP_JWT_PUBLIC_KEY_LOCATION: file:/run/keys/jwt-public.pem
+      APP_JWT_PRIVATE_KEY_LOCATION: file:/run/keys/jwt-private.pem
+      FRONTEND_URL: ${FRONTEND_URL:?falta FRONTEND_URL en .env}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+    depends_on:
+      auth-db: { condition: service_healthy }
+      usuarios-service: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8081/actuator/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 40s
+
+  catalogo-service:
+    build:
+      <<: *service-build
+      args:
+        SERVICE: catalogo-service
+    restart: unless-stopped
+    volumes:
+      - ./keys:/run/keys:ro
+      - catalogo-uploads:/data/uploads
+    environment:
+      DATABASE_URL: jdbc:postgresql://catalogo-db:5432/catalogodb
+      DATABASE_USERNAME: catalogo
+      DATABASE_PASSWORD: ${CATALOGO_DB_PASSWORD}
+      USUARIOS_URL: http://usuarios-service:8082
+      INTERNAL_SECRET: ${INTERNAL_SECRET}
+      APP_JWT_PUBLIC_KEY_LOCATION: file:/run/keys/jwt-public.pem
+      UPLOAD_DIR: /data/uploads
+    depends_on:
+      catalogo-db: { condition: service_healthy }
+      usuarios-service: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8083/actuator/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 40s
+
+  api-gateway:
+    build:
+      <<: *service-build
+      args:
+        SERVICE: api-gateway
+    restart: unless-stopped
+    expose:
+      - "8080"          # solo alcanzable desde Caddy (red interna de compose)
+    volumes: *jwt-keys
+    environment:
+      SERVICES_AUTH_URL: http://auth-service:8081
+      SERVICES_USUARIOS_URL: http://usuarios-service:8082
+      SERVICES_CATALOGO_URL: http://catalogo-service:8083
+      GATEWAY_ALLOWED_ORIGINS: ${GATEWAY_ALLOWED_ORIGINS:?falta GATEWAY_ALLOWED_ORIGINS en .env}
+      APP_JWT_PUBLIC_KEY_LOCATION: file:/run/keys/jwt-public.pem
+    depends_on:
+      auth-service: { condition: service_healthy }
+      usuarios-service: { condition: service_healthy }
+      catalogo-service: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
+
+volumes:
+  auth-db-data:
+  usuarios-db-data:
+  catalogo-db-data:
+  catalogo-uploads:
+  caddy-data:
+  caddy-config:
