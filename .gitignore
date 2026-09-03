@@ -25,12 +25,6 @@ services/api-gateway/src/main/resources/static/
 # La carpeta "uploads" se crea donde se ejecute el servicio (cwd).
 /uploads/
 services/catalogo-service/uploads/
-legacy-monolith/uploads/*
-!legacy-monolith/uploads/.gitkeep
-
-# El monolito original queda como referencia; su build de React no se versiona
-legacy-monolith/src/main/resources/static/*
-!legacy-monolith/src/main/resources/static/.gitkeep
 
 # --- Claves JWT de PRODUCCION ---
 # Las de la demo (keys/jwt-*.pem y las copias en cada servicio) SI se

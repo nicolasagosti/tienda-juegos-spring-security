@@ -1,13 +1,13 @@
 # GameStore — versión microservicios
 
-Migración del monolito Spring Boot original (`legacy-monolith/`) a **4 servicios
-Spring Boot + 1 librería compartida**, manteniendo el mismo frontend React y la
-misma funcionalidad (roles ADMIN / VENDEDOR / COMPRADOR, JWT + refresh tokens,
+Migración del monolito Spring Boot original a **4 servicios Spring Boot + 1
+librería compartida**, manteniendo el mismo frontend React y la misma
+funcionalidad (roles ADMIN / VENDEDOR / COMPRADOR, JWT + refresh tokens,
 2FA TOTP, login con Google, bloqueo por intentos fallidos).
 
-> El monolito sigue compilando y corriendo en `legacy-monolith/` como
-> referencia — se elimina cuando la versión microservicios esté consolidada.
-> Ver [`legacy-monolith/README.md`](legacy-monolith/README.md).
+> El monolito original vivió en `legacy-monolith/` como referencia durante la
+> migración; se eliminó una vez consolidada la versión microservicios. El
+> historial sigue disponible en git (rama `feat/microservices` y anteriores).
 
 Diseño detallado (por qué cada corte, flujos entre servicios, compromisos y
 próximos pasos): **[MICROSERVICES.md](MICROSERVICES.md)**.

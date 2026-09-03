@@ -30,22 +30,6 @@ jobs:
       - name: Compilar y empaquetar los 5 modulos
         run: mvn -B -f services/pom.xml verify
 
-  legacy-monolith:
-    name: Monolito original (referencia)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Configurar JDK 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: temurin
-          java-version: '21'
-          cache: maven
-
-      - name: Compilar y correr tests
-        run: mvn -B -f legacy-monolith/pom.xml verify
-
   frontend:
     name: Frontend (React/Vite build)
     runs-on: ubuntu-latest

@@ -10,14 +10,14 @@ introducir todavía un message broker. Toda la comunicación entre servicios es
 El monolito tenía todo bajo `com.example.tiendajuegos`. El corte fue por los
 paquetes que ya existían:
 
-| Monolito (`legacy-monolith/`) | Ahora vive en |
+| En el monolito original | Ahora vive en |
 |---|---|
 | `security/JwtService`, `JwtAuthenticationFilter` | `common-security` (RS256) |
 | `security/*` (TOTP, refresh, lockout, OAuth2), `api/controller/AuthApiController`, `TotpApiController` | **auth-service** |
 | `model/Usuario` (parte perfil), `service/UsuarioService`, `api/controller/UsuarioApiController`, `AdminStatsApiController` | **usuarios-service** |
 | `model/{Juego,Seccion}`, `service/{JuegoService,SeccionService,ImagenStorageService}`, `config/GeneradorPortadas`, `api/controller/{JuegoApiController,SeccionApiController}` | **catalogo-service** |
 | `config/SecurityConfig` (parte ruteo + CORS) | **api-gateway** |
-| `controller/*` (vistas Thymeleaf) | se quedan en `legacy-monolith/` (no se migran) |
+| `controller/*` (vistas Thymeleaf) | se descartaron: el frontend React las reemplaza |
 
 ## 2. El corte de `Usuario` (la decisión central)
 
