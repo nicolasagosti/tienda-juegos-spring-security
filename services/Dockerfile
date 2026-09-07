@@ -9,7 +9,7 @@
 # ==========================================================
 
 # ---- Etapa 1: build ----
-FROM maven:3.9-eclipse-temurin-21 AS build
+FROM maven:3.9-eclipse-temurin-25 AS build
 WORKDIR /build
 
 # Copiamos primero solo los pom.xml para cachear la descarga de dependencias.
@@ -28,7 +28,7 @@ RUN mvn -B -q -pl ${SERVICE} -am -DskipTests package
 # ---- Etapa 2: runtime ----
 # "jammy" (Debian) y no Alpine: el truststore TLS de Alpine dio problemas
 # con Postgres gestionados (Neon) en el monolito; mismo criterio aca.
-FROM eclipse-temurin:21-jre-jammy
+FROM eclipse-temurin:25-jre-jammy
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
     && rm -rf /var/lib/apt/lists/*
