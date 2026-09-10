@@ -99,10 +99,9 @@ frontend apunta a esa URL con `VITE_API_BASE_URL`. Guía paso a paso:
 Se recrean en cada arranque (bases en memoria / volúmenes nuevos):
 
 ```
-admin      / admin123      -> ADMIN
-vendedor1  / vendedor123   -> VENDEDOR
-vendedor2  / vendedor123   -> VENDEDOR
-comprador1 / comprador123  -> COMPRADOR
+admin                   / admin123      -> ADMIN
+vendedor1  / vendedor2   / vendedor123   -> VENDEDOR
+comprador1 .. comprador5 / comprador123  -> COMPRADOR
 ```
 
 ## Smoke test rápido

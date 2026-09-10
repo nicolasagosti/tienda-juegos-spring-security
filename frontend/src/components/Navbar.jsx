@@ -26,6 +26,11 @@ export default function Navbar({ user, navigate, activeView, notify }) {
             Publicar juego
           </button>
         )}
+        {user.rol === 'COMPRADOR' && (
+          <button className={linkClass('misCompras')} onClick={() => navigate('misCompras')}>
+            Mis compras
+          </button>
+        )}
         {user.rol === 'ADMIN' && (
           <>
             <button className={linkClass('adminDashboard')} onClick={() => navigate('adminDashboard')}>

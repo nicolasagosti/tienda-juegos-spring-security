@@ -4,7 +4,7 @@ import api, { resolveImageUrl } from '../api/client'
 export default function GameFormPage({ gameId, navigate, notify }) {
   const esNuevo = !gameId
   const [secciones, setSecciones] = useState([])
-  const [form, setForm] = useState({ nombre: '', descripcion: '', precio: '', seccionId: '' })
+  const [form, setForm] = useState({ nombre: '', descripcion: '', precio: '', stock: '10', seccionId: '' })
   const [imagenActual, setImagenActual] = useState(null)
   const [archivo, setArchivo] = useState(null)
   const [saving, setSaving] = useState(false)
@@ -20,6 +20,7 @@ export default function GameFormPage({ gameId, navigate, notify }) {
             nombre: data.nombre,
             descripcion: data.descripcion || '',
             precio: data.precio,
+            stock: String(data.stock ?? 0),
             seccionId: data.seccion ? String(data.seccion.id) : '',
           })
           setImagenActual(data.imagenUrl)
@@ -39,6 +40,7 @@ export default function GameFormPage({ gameId, navigate, notify }) {
     data.append('nombre', form.nombre)
     data.append('descripcion', form.descripcion)
     data.append('precio', form.precio)
+    data.append('stock', form.stock || '0')
     if (form.seccionId) data.append('seccionId', form.seccionId)
     if (archivo) data.append('imagen', archivo)
 
@@ -84,6 +86,18 @@ export default function GameFormPage({ gameId, navigate, notify }) {
           step="0.01"
           min="0"
           value={form.precio}
+          onChange={handleChange}
+          required
+        />
+
+        <label htmlFor="stock">Stock (unidades disponibles)</label>
+        <input
+          id="stock"
+          name="stock"
+          type="number"
+          step="1"
+          min="0"
+          value={form.stock}
           onChange={handleChange}
           required
         />

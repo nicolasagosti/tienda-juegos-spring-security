@@ -33,6 +33,33 @@ export default function CatalogPage({ user, navigate, notify }) {
     }
   }
 
+  const handleComprar = async (id) => {
+    try {
+      await api.post(`/juegos/${id}/comprar`)
+      notify('success', 'Compra realizada (ficticia)')
+      load()
+    } catch (err) {
+      notify('error', err.response?.data?.mensaje || 'No se pudo completar la compra')
+    }
+  }
+
+  const handleAgregarStock = async (id) => {
+    const val = window.prompt('Cuantas unidades agregar al stock?', '5')
+    if (val == null) return
+    const cantidad = Number(val)
+    if (!Number.isInteger(cantidad) || cantidad <= 0) {
+      notify('error', 'Ingresa un numero entero mayor a 0')
+      return
+    }
+    try {
+      await api.post(`/juegos/${id}/stock`, null, { params: { cantidad } })
+      notify('success', `Stock actualizado (+${cantidad})`)
+      load()
+    } catch (err) {
+      notify('error', err.response?.data?.mensaje || 'No se pudo actualizar el stock')
+    }
+  }
+
   return (
     <>
       <div className="page-header">
@@ -46,8 +73,8 @@ export default function CatalogPage({ user, navigate, notify }) {
 
       {user.rol === 'COMPRADOR' && (
         <p className="info-banner">
-          Estas viendo el catalogo en modo <strong>solo lectura</strong>. Como comprador podes ver los
-          juegos, pero no publicarlos ni editarlos.
+          Como comprador podes <strong>comprar</strong> juegos (compra ficticia, sin pago real) y verlos
+          en <strong>Mis compras</strong>. No podes publicarlos ni editarlos.
         </p>
       )}
 
@@ -56,7 +83,7 @@ export default function CatalogPage({ user, navigate, notify }) {
       ) : (
         <div className="grid-juegos">
           {juegos.map((j) => (
-            <div className="card-juego" key={j.id}>
+            <div className={`card-juego${j.stock <= 0 ? ' card-agotado' : ''}`} key={j.id}>
               <div className="card-imagen">
                 {j.imagenUrl ? (
                   <img src={resolveImageUrl(j.imagenUrl)} alt={j.nombre} />
@@ -70,12 +97,18 @@ export default function CatalogPage({ user, navigate, notify }) {
                 <p className="descripcion">{j.descripcion}</p>
                 <p className="meta">
                   {j.seccion && <span className="tag">{j.seccion.nombre}</span>}
+                  <span className={j.stock > 0 ? 'estado-ok' : 'estado-bloqueado'}>
+                    {j.stock > 0 ? `${j.stock} en stock` : 'Sin stock'}
+                  </span>
                   <span className="vendedor-nombre">
                     por <strong>{j.vendedor.nombreCompleto}</strong>
                   </span>
                 </p>
                 {j.puedeEditar && (
                   <div className="card-actions">
+                    <button className="btn btn-sm" onClick={() => handleAgregarStock(j.id)}>
+                      + Stock
+                    </button>
                     <button
                       className="btn btn-secondary btn-sm"
                       onClick={() => navigate('gameForm', { id: j.id })}
@@ -85,6 +118,23 @@ export default function CatalogPage({ user, navigate, notify }) {
                     <button className="btn btn-danger btn-sm" onClick={() => handleDelete(j.id)}>
                       Eliminar
                     </button>
+                  </div>
+                )}
+                {user.rol === 'COMPRADOR' && (
+                  <div className="card-actions">
+                    {j.comprado ? (
+                      <button className="btn btn-secondary btn-sm" disabled>
+                        ✓ Comprado
+                      </button>
+                    ) : j.stock > 0 ? (
+                      <button className="btn btn-primary btn-sm" onClick={() => handleComprar(j.id)}>
+                        Comprar
+                      </button>
+                    ) : (
+                      <button className="btn btn-secondary btn-sm" disabled>
+                        Sin stock
+                      </button>
+                    )}
                   </div>
                 )}
               </div>

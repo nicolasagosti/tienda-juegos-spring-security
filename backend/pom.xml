@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+      POM "padre" de todos los microservicios. A su vez hereda de
+      spring-boot-starter-parent, asi que cada modulo hijo recibe la gestion
+      de versiones de Spring Boot sin declararla.
+
+      Compilar todo:   mvn -f services/pom.xml clean package
+      Un solo modulo:  mvn -f services/pom.xml -pl auth-service -am package
+    -->
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.3.4</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>com.gamestore</groupId>
+    <artifactId>gamestore-services</artifactId>
+    <version>1.0.0</version>
+    <packaging>pom</packaging>
+    <name>gamestore-services</name>
+    <description>Tienda de juegos - version microservicios</description>
+
+    <properties>
+        <java.version>21</java.version>
+        <spring-cloud.version>2023.0.3</spring-cloud.version>
+        <jjwt.version>0.12.6</jjwt.version>
+
+        <!-- Cobertura + analisis estatico. JaCoCo genera el XML que despues
+             lee SonarQube (sonar.coverage.jacoco.xmlReportPaths). -->
+        <jacoco.version>0.8.12</jacoco.version>
+        <sonar-maven-plugin.version>4.0.0.4121</sonar-maven-plugin.version>
+        <sonar.host.url>${env.SONAR_HOST_URL}</sonar.host.url>
+        <sonar.coverage.jacoco.xmlReportPaths>
+            ${project.basedir}/target/site/jacoco/jacoco.xml
+        </sonar.coverage.jacoco.xmlReportPaths>
+    </properties>
+
+    <modules>
+        <module>common-security</module>
+        <module>api-gateway</module>
+        <module>auth-service</module>
+        <!-- negocio-service: unifica lo que antes eran catalogo-service y
+             usuarios-service en un solo componente de logica de negocio
+             (misma base, llamadas en memoria). -->
+        <module>negocio-service</module>
+    </modules>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
+            <!-- La libreria compartida de seguridad (JWT) -->
+            <dependency>
+                <groupId>com.gamestore</groupId>
+                <artifactId>common-security</artifactId>
+                <version>1.0.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-api</artifactId>
+                <version>${jjwt.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-impl</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+            <dependency>
+                <groupId>io.jsonwebtoken</groupId>
+                <artifactId>jjwt-jackson</artifactId>
+                <version>${jjwt.version}</version>
+                <scope>runtime</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.springframework.boot</groupId>
+                    <artifactId>spring-boot-maven-plugin</artifactId>
+                </plugin>
+
+                <!-- Instrumenta las clases y escribe target/site/jacoco/jacoco.xml
+                     en la fase verify. Los modulos que quieran cobertura solo
+                     declaran <plugin> con este groupId/artifactId (sin version). -->
+                <plugin>
+                    <groupId>org.jacoco</groupId>
+                    <artifactId>jacoco-maven-plugin</artifactId>
+                    <version>${jacoco.version}</version>
+                    <executions>
+                        <execution>
+                            <id>jacoco-prepare-agent</id>
+                            <goals>
+                                <goal>prepare-agent</goal>
+                            </goals>
+                        </execution>
+                        <execution>
+                            <id>jacoco-report</id>
+                            <phase>verify</phase>
+                            <goals>
+                                <goal>report</goal>
+                            </goals>
+                        </execution>
+                    </executions>
+                </plugin>
+
+                <!-- mvn -pl negocio-service verify sonar:sonar
+                     -Dsonar.host.url=... -Dsonar.token=... -->
+                <plugin>
+                    <groupId>org.sonarsource.scanner.maven</groupId>
+                    <artifactId>sonar-maven-plugin</artifactId>
+                    <version>${sonar-maven-plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+    </build>
+
+</project>
