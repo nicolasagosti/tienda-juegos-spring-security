@@ -26,6 +26,11 @@ backend/api-gateway/src/main/resources/static/
 /uploads/
 backend/negocio-service/uploads/
 
+# Arbol viejo "services/": la migracion a "backend/" ya esta hecha. La
+# extension de modernizacion de VSCode a veces lo recrea con basura de
+# build; que no vuelva a colarse en un commit.
+/services/
+
 # --- Claves JWT de PRODUCCION ---
 # Las de la demo (keys/jwt-*.pem y las copias en cada servicio) SI se
 # versionan a proposito, igual que el "demo-secret" del monolito. Si
