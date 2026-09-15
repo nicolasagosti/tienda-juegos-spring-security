@@ -91,6 +91,45 @@ class AuthFlowIntegrationTest {
                 .andExpect(jsonPath("$.mensaje").value("Esta cuenta esta deshabilitada"));
     }
 
+    // ---------- Bean Validation (400 con {"mensaje"}) ----------
+
+    @Test
+    void login_usernameVacio_400ConMensaje() throws Exception {
+        mvc.perform(loginRequest("   ", "admin123", null))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje", org.hamcrest.Matchers.startsWith("username:")));
+    }
+
+    @Test
+    void login_totpNoNumerico_400ConMensaje() throws Exception {
+        mvc.perform(loginRequest("admin", "admin123", "abc"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje", org.hamcrest.Matchers.startsWith("totpCode:")));
+    }
+
+    @Test
+    void refresh_sinToken_400ConMensaje() throws Exception {
+        mvc.perform(post("/api/auth/refresh").contentType(MediaType.APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje", org.hamcrest.Matchers.startsWith("refreshToken:")));
+    }
+
+    @Test
+    void logout_sinCuerpo_204() throws Exception {
+        mvc.perform(post("/api/auth/logout"))
+                .andExpect(status().isNoContent());
+    }
+
+    @Test
+    void dosFactores_enableConCodigoNoNumerico_400ConMensaje() throws Exception {
+        String token = login("admin", "admin123", null, 200).get("token").asText();
+        mvc.perform(post("/api/auth/2fa/enable").header("Authorization", "Bearer " + token)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"codigo\":\"12ab56\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.mensaje", org.hamcrest.Matchers.startsWith("codigo:")));
+    }
+
     // ---------- bloqueo por intentos fallidos ----------
 
     @Test

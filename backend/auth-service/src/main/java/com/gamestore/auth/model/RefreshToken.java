@@ -1,6 +1,9 @@
 package com.gamestore.auth.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 
@@ -19,18 +22,24 @@ public class RefreshToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank
+    @Size(max = 100)
     @Column(nullable = false, unique = true, length = 100)
     private String token;
 
+    @NotBlank
+    @Size(max = 50)
     @Column(nullable = false, length = 50)
     private String username;
 
+    @NotNull
     @Column(nullable = false)
     private LocalDateTime expiraEn;
 
     @Column(nullable = false)
     private boolean revocado = false;
 
+    @NotNull
     @Column(nullable = false)
     private LocalDateTime creadoEn = LocalDateTime.now();
 

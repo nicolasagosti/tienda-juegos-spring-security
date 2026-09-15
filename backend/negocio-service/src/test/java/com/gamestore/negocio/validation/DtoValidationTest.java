@@ -1,9 +1,11 @@
 package com.gamestore.negocio.validation;
 
-import com.gamestore.negocio.catalogo.web.dto.CrearSeccionRequest;
-import com.gamestore.negocio.catalogo.web.dto.JuegoFormRequest;
+import com.gamestore.negocio.catalogo.dto.CrearSeccionRequestDto;
+import com.gamestore.negocio.catalogo.dto.JuegoFormRequestDto;
 import com.gamestore.negocio.usuarios.model.Rol;
-import com.gamestore.negocio.usuarios.web.dto.CrearUsuarioRequest;
+import com.gamestore.negocio.usuarios.dto.ActualizarUsuarioRequestDto;
+import com.gamestore.negocio.usuarios.dto.CrearUsuarioRequestDto;
+import com.gamestore.negocio.usuarios.dto.GoogleUsuarioRequestDto;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -46,18 +48,18 @@ class DtoValidationTest {
                 .collect(Collectors.toSet());
     }
 
-    // ---------- CrearUsuarioRequest ----------
+    // ---------- CrearUsuarioRequestDto ----------
 
     @Test
     void crearUsuarioRequest_valido_no_tiene_violaciones() {
-        var req = new CrearUsuarioRequest("vendedor9", "secret1", "Vendedor Nueve", "v9@x.com", Rol.VENDEDOR);
+        var req = new CrearUsuarioRequestDto("vendedor9", "secret1", "Vendedor Nueve", "v9@x.com", Rol.VENDEDOR);
 
         assertThat(validator.validate(req)).isEmpty();
     }
 
     @Test
     void crearUsuarioRequest_marca_username_password_email_y_rol() {
-        var req = new CrearUsuarioRequest("ab", "123", "  ", "no-es-email", null);
+        var req = new CrearUsuarioRequestDto("ab", "123", "  ", "no-es-email", null);
 
         assertThat(propiedadesInvalidas(req))
                 .contains("username", "password", "nombreCompleto", "email", "rol");
@@ -65,16 +67,52 @@ class DtoValidationTest {
 
     @Test
     void crearUsuarioRequest_acepta_email_nulo() {
-        var req = new CrearUsuarioRequest("comprador9", "secret1", "Comprador Nueve", null, Rol.COMPRADOR);
+        var req = new CrearUsuarioRequestDto("comprador9", "secret1", "Comprador Nueve", null, Rol.COMPRADOR);
 
         assertThat(validator.validate(req)).isEmpty();
     }
 
-    // ---------- JuegoFormRequest ----------
+    // ---------- ActualizarUsuarioRequestDto ----------
+
+    @Test
+    void actualizarUsuarioRequest_acepta_nuevaPassword_nula_o_vacia() {
+        assertThat(validator.validate(new ActualizarUsuarioRequestDto("Nombre", "a@x.com", Rol.COMPRADOR, true, null))).isEmpty();
+        assertThat(validator.validate(new ActualizarUsuarioRequestDto("Nombre", "a@x.com", Rol.COMPRADOR, true, ""))).isEmpty();
+    }
+
+    @Test
+    void actualizarUsuarioRequest_marca_nuevaPassword_corta() {
+        var req = new ActualizarUsuarioRequestDto("Nombre", "a@x.com", Rol.COMPRADOR, true, "123");
+
+        assertThat(propiedadesInvalidas(req)).containsExactly("nuevaPassword");
+    }
+
+    @Test
+    void actualizarUsuarioRequest_marca_nombre_vacio_email_invalido_y_rol_nulo() {
+        var req = new ActualizarUsuarioRequestDto(" ", "no-es-email", null, true, "secret1");
+
+        assertThat(propiedadesInvalidas(req)).containsExactlyInAnyOrder("nombreCompleto", "email", "rol");
+    }
+
+    // ---------- GoogleUsuarioRequestDto ----------
+
+    @Test
+    void googleUsuarioRequest_valido_sin_nombre_no_tiene_violaciones() {
+        assertThat(validator.validate(new GoogleUsuarioRequestDto("g@gmail.com", null))).isEmpty();
+        assertThat(validator.validate(new GoogleUsuarioRequestDto("g@gmail.com", ""))).isEmpty();
+    }
+
+    @Test
+    void googleUsuarioRequest_marca_email_vacio_o_invalido() {
+        assertThat(propiedadesInvalidas(new GoogleUsuarioRequestDto("", "Nombre"))).containsExactly("email");
+        assertThat(propiedadesInvalidas(new GoogleUsuarioRequestDto("no-es-email", "Nombre"))).containsExactly("email");
+    }
+
+    // ---------- JuegoFormRequestDto ----------
 
     @Test
     void juegoFormRequest_valido_no_tiene_violaciones() {
-        var form = new JuegoFormRequest();
+        var form = new JuegoFormRequestDto();
         form.setNombre("Galaxy Raiders");
         form.setPrecio(new BigDecimal("39.99"));
         form.setStock(3);
@@ -84,7 +122,7 @@ class DtoValidationTest {
 
     @Test
     void juegoFormRequest_marca_nombre_vacio_precio_nulo_y_stock_negativo() {
-        var form = new JuegoFormRequest();
+        var form = new JuegoFormRequestDto();
         form.setNombre("   ");
         form.setPrecio(null);
         form.setStock(-2);
@@ -94,7 +132,7 @@ class DtoValidationTest {
 
     @Test
     void juegoFormRequest_marca_precio_negativo_y_con_demasiados_decimales() {
-        var form = new JuegoFormRequest();
+        var form = new JuegoFormRequestDto();
         form.setNombre("Demo");
         form.setPrecio(new BigDecimal("-1.234"));
         form.setStock(0);
@@ -102,17 +140,17 @@ class DtoValidationTest {
         assertThat(propiedadesInvalidas(form)).contains("precio");
     }
 
-    // ---------- CrearSeccionRequest ----------
+    // ---------- CrearSeccionRequestDto ----------
 
     @Test
     void crearSeccionRequest_marca_nombre_vacio() {
-        assertThat(propiedadesInvalidas(new CrearSeccionRequest("", "desc"))).contains("nombre");
+        assertThat(propiedadesInvalidas(new CrearSeccionRequestDto("", "desc"))).contains("nombre");
     }
 
     @Test
     void crearSeccionRequest_marca_nombre_demasiado_largo() {
         String largo = "x".repeat(61);
 
-        assertThat(propiedadesInvalidas(new CrearSeccionRequest(largo, null))).contains("nombre");
+        assertThat(propiedadesInvalidas(new CrearSeccionRequestDto(largo, null))).contains("nombre");
     }
 }

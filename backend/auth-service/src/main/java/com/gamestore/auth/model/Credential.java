@@ -1,6 +1,10 @@
 package com.gamestore.auth.model;
 
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
 
@@ -13,6 +17,10 @@ import java.time.LocalDateTime;
  * Se referencia por {@code username} (no por id): ese es el dato que ambos
  * servicios comparten como clave natural inmutable del usuario. El rol y el
  * flag "habilitado" NO estan aca a proposito -> los trae usuarios-service.
+ *
+ * Las constraints de {@code jakarta.validation} son la ultima red: aunque
+ * un DTO de request no valide algo, Hibernate Validator corre en el
+ * {@code pre-persist}/{@code pre-update} y no deja guardar basura.
  */
 @Entity
 @Table(name = "credenciales")
@@ -22,18 +30,25 @@ public class Credential {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @NotBlank
+    @Size(min = 3, max = 50)
     @Column(nullable = false, unique = true, length = 50)
     private String username;
 
     /** Siempre BCrypt. */
+    @NotBlank
+    @Size(max = 255)
     @Column(nullable = false)
     private String passwordHash;
 
     /** Copia del email, necesaria para casar la cuenta en el login con Google. El canonico lo tiene usuarios-service. */
+    @Email
+    @Size(max = 255)
     @Column
     private String email;
 
     // ---- Bloqueo automatico por intentos fallidos (LoginAttemptListener) ----
+    @PositiveOrZero
     @Column(name = "intentos_fallidos", nullable = false)
     private int intentosFallidos = 0;
 
@@ -41,6 +56,7 @@ public class Credential {
     private LocalDateTime bloqueadoHasta;
 
     // ---- 2FA (TOTP) ----
+    @Size(max = 64)
     @Column(name = "totp_secret", length = 64)
     private String totpSecret;
 

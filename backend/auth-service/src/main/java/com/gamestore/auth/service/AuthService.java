@@ -7,9 +7,9 @@ import com.gamestore.auth.model.RefreshToken;
 import com.gamestore.auth.repository.CredentialRepository;
 import com.gamestore.auth.security.CredentialUserDetails;
 import com.gamestore.auth.security.TotpService;
-import com.gamestore.auth.web.Dtos.LoginResponse;
-import com.gamestore.auth.web.Dtos.RefreshResponse;
-import com.gamestore.auth.web.Dtos.UsuarioDTO;
+import com.gamestore.auth.dto.LoginResponseDto;
+import com.gamestore.auth.dto.RefreshResponseDto;
+import com.gamestore.auth.dto.UsuarioDto;
 import com.gamestore.common.security.JwtService;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -48,7 +48,7 @@ public class AuthService {
         this.refreshTokenService = refreshTokenService;
     }
 
-    public LoginResponse login(String username, String password, String totpCode) {
+    public LoginResponseDto login(String username, String password, String totpCode) {
         Credential credential = autenticarPassword(username, password);
 
         // Rol + estado "habilitado" viven en usuarios-service.
@@ -68,17 +68,17 @@ public class AuthService {
 
         String accessToken = jwtService.generar(info.id(), username, info.rol());
         RefreshToken refresh = refreshTokenService.crear(username);
-        return new LoginResponse(accessToken, refresh.getToken(), aDto(info));
+        return new LoginResponseDto(accessToken, refresh.getToken(), aDto(info));
     }
 
-    public RefreshResponse refresh(String refreshToken) {
+    public RefreshResponseDto refresh(String refreshToken) {
         RefreshToken actual = refreshTokenService.buscarValido(refreshToken)
                 .orElseThrow(() -> new AuthExceptions.NoAutorizado("Sesion expirada, iniciar sesion de nuevo"));
 
         UsuarioInfo info = usuariosClient.porUsername(actual.getUsername());
         RefreshToken nuevo = refreshTokenService.rotar(actual);
         String accessToken = jwtService.generar(info.id(), actual.getUsername(), info.rol());
-        return new RefreshResponse(accessToken, nuevo.getToken());
+        return new RefreshResponseDto(accessToken, nuevo.getToken());
     }
 
     public void logout(String refreshToken) {
@@ -102,7 +102,7 @@ public class AuthService {
         }
     }
 
-    private static UsuarioDTO aDto(UsuarioInfo i) {
-        return new UsuarioDTO(i.id(), i.username(), i.nombreCompleto(), i.email(), i.rol(), i.habilitado());
+    private static UsuarioDto aDto(UsuarioInfo i) {
+        return new UsuarioDto(i.id(), i.username(), i.nombreCompleto(), i.email(), i.rol(), i.habilitado());
     }
 }
