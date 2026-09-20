@@ -1,14 +1,16 @@
 @echo off
 rem ==========================================================
-rem Compila los 5 modulos (Maven) y el frontend (React).
-rem Dejar los .jar en services\*\target y el build de React
-rem dentro del gateway. Correr una vez, y despues run-dev.bat.
+rem Compila los 5 modulos Maven (api-gateway, auth-service,
+rem negocio-service y las libs common-security / common-web) y
+rem el frontend (React). Deja los .jar en backend\*\target y el
+rem build de React dentro del gateway. Correr una vez, y
+rem despues run-dev.bat.
 rem ==========================================================
 setlocal
 cd /d "%~dp0.."
 
 echo === Compilando microservicios (Maven) ===
-call mvn -f services/pom.xml -DskipTests package
+call mvn -f backend/pom.xml -DskipTests package
 if errorlevel 1 (echo FALLO el build de Maven & exit /b 1)
 
 echo.
