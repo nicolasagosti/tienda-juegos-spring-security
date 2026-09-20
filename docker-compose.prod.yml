@@ -16,16 +16,34 @@
 name: gamestore-prod
 
 x-service-build: &service-build
-  context: ./services
+  context: ./backend
   dockerfile: Dockerfile
 
 x-jwt-keys: &jwt-keys
   - ./keys:/run/keys:ro
 
+# Limites de memoria (los aplica "docker compose up"). Cada JVM ajusta su
+# heap al limite via -XX:MaxRAMPercentage (ver backend/Dockerfile).
+x-db-deploy: &db-deploy
+  resources:
+    limits:
+      memory: 256M
+
+x-svc-deploy: &svc-deploy
+  resources:
+    limits:
+      memory: 700M
+    reservations:
+      memory: 300M
+
 services:
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 128M
     ports:
       - "80:80"
       - "443:443"
@@ -48,58 +66,49 @@ services:
       POSTGRES_USER: auth
       POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD:?falta AUTH_DB_PASSWORD en .env}
     volumes: [auth-db-data:/var/lib/postgresql/data]
+    deploy: { <<: *db-deploy }
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U auth -d authdb"]
       interval: 5s
       timeout: 3s
       retries: 20
 
-  usuarios-db:
+  negocio-db:
     image: postgres:16-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_DB: usuariosdb
-      POSTGRES_USER: usuarios
-      POSTGRES_PASSWORD: ${USUARIOS_DB_PASSWORD:?falta USUARIOS_DB_PASSWORD en .env}
-    volumes: [usuarios-db-data:/var/lib/postgresql/data]
+      POSTGRES_DB: negociodb
+      POSTGRES_USER: negocio
+      POSTGRES_PASSWORD: ${NEGOCIO_DB_PASSWORD:?falta NEGOCIO_DB_PASSWORD en .env}
+    volumes: [negocio-db-data:/var/lib/postgresql/data]
+    deploy: { <<: *db-deploy }
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U usuarios -d usuariosdb"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-
-  catalogo-db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_DB: catalogodb
-      POSTGRES_USER: catalogo
-      POSTGRES_PASSWORD: ${CATALOGO_DB_PASSWORD:?falta CATALOGO_DB_PASSWORD en .env}
-    volumes: [catalogo-db-data:/var/lib/postgresql/data]
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U catalogo -d catalogodb"]
+      test: ["CMD-SHELL", "pg_isready -U negocio -d negociodb"]
       interval: 5s
       timeout: 3s
       retries: 20
 
   # ---------- Servicios ----------
-  usuarios-service:
+  negocio-service:
     build:
       <<: *service-build
       args:
-        SERVICE: usuarios-service
+        SERVICE: negocio-service
     restart: unless-stopped
-    volumes: *jwt-keys
+    deploy: { <<: *svc-deploy }
+    volumes:
+      - ./keys:/run/keys:ro
+      - negocio-uploads:/data/uploads
     environment:
-      DATABASE_URL: jdbc:postgresql://usuarios-db:5432/usuariosdb
-      DATABASE_USERNAME: usuarios
-      DATABASE_PASSWORD: ${USUARIOS_DB_PASSWORD}
+      DATABASE_URL: jdbc:postgresql://negocio-db:5432/negociodb
+      DATABASE_USERNAME: negocio
+      DATABASE_PASSWORD: ${NEGOCIO_DB_PASSWORD}
       AUTH_URL: http://auth-service:8081
-      CATALOGO_URL: http://catalogo-service:8083
       INTERNAL_SECRET: ${INTERNAL_SECRET:?falta INTERNAL_SECRET en .env}
       APP_JWT_PUBLIC_KEY_LOCATION: file:/run/keys/jwt-public.pem
+      UPLOAD_DIR: /data/uploads
     depends_on:
-      usuarios-db: { condition: service_healthy }
+      negocio-db: { condition: service_healthy }
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8082/actuator/health"]
       interval: 10s
@@ -113,12 +122,13 @@ services:
       args:
         SERVICE: auth-service
     restart: unless-stopped
+    deploy: { <<: *svc-deploy }
     volumes: *jwt-keys
     environment:
       DATABASE_URL: jdbc:postgresql://auth-db:5432/authdb
       DATABASE_USERNAME: auth
       DATABASE_PASSWORD: ${AUTH_DB_PASSWORD}
-      USUARIOS_URL: http://usuarios-service:8082
+      USUARIOS_URL: http://negocio-service:8082
       INTERNAL_SECRET: ${INTERNAL_SECRET}
       APP_JWT_PUBLIC_KEY_LOCATION: file:/run/keys/jwt-public.pem
       APP_JWT_PRIVATE_KEY_LOCATION: file:/run/keys/jwt-private.pem
@@ -127,36 +137,9 @@ services:
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
     depends_on:
       auth-db: { condition: service_healthy }
-      usuarios-service: { condition: service_healthy }
+      negocio-service: { condition: service_healthy }
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8081/actuator/health"]
-      interval: 10s
-      timeout: 3s
-      retries: 20
-      start_period: 40s
-
-  catalogo-service:
-    build:
-      <<: *service-build
-      args:
-        SERVICE: catalogo-service
-    restart: unless-stopped
-    volumes:
-      - ./keys:/run/keys:ro
-      - catalogo-uploads:/data/uploads
-    environment:
-      DATABASE_URL: jdbc:postgresql://catalogo-db:5432/catalogodb
-      DATABASE_USERNAME: catalogo
-      DATABASE_PASSWORD: ${CATALOGO_DB_PASSWORD}
-      USUARIOS_URL: http://usuarios-service:8082
-      INTERNAL_SECRET: ${INTERNAL_SECRET}
-      APP_JWT_PUBLIC_KEY_LOCATION: file:/run/keys/jwt-public.pem
-      UPLOAD_DIR: /data/uploads
-    depends_on:
-      catalogo-db: { condition: service_healthy }
-      usuarios-service: { condition: service_healthy }
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8083/actuator/health"]
       interval: 10s
       timeout: 3s
       retries: 20
@@ -168,19 +151,18 @@ services:
       args:
         SERVICE: api-gateway
     restart: unless-stopped
+    deploy: { <<: *svc-deploy }
     expose:
       - "8080"          # solo alcanzable desde Caddy (red interna de compose)
     volumes: *jwt-keys
     environment:
       SERVICES_AUTH_URL: http://auth-service:8081
-      SERVICES_USUARIOS_URL: http://usuarios-service:8082
-      SERVICES_CATALOGO_URL: http://catalogo-service:8083
+      SERVICES_NEGOCIO_URL: http://negocio-service:8082
       GATEWAY_ALLOWED_ORIGINS: ${GATEWAY_ALLOWED_ORIGINS:?falta GATEWAY_ALLOWED_ORIGINS en .env}
       APP_JWT_PUBLIC_KEY_LOCATION: file:/run/keys/jwt-public.pem
     depends_on:
       auth-service: { condition: service_healthy }
-      usuarios-service: { condition: service_healthy }
-      catalogo-service: { condition: service_healthy }
+      negocio-service: { condition: service_healthy }
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
       interval: 10s
@@ -190,8 +172,7 @@ services:
 
 volumes:
   auth-db-data:
-  usuarios-db-data:
-  catalogo-db-data:
-  catalogo-uploads:
+  negocio-db-data:
+  negocio-uploads:
   caddy-data:
   caddy-config:

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../contexts/AuthContext'
 import { backendOrigin } from '../api/client'
 
 const DEMO_USERS = [
@@ -7,6 +7,10 @@ const DEMO_USERS = [
   { username: 'vendedor1', password: 'vendedor123', role: 'VENDEDOR', badgeClass: 'badge-vendedor' },
   { username: 'vendedor2', password: 'vendedor123', role: 'VENDEDOR', badgeClass: 'badge-vendedor' },
   { username: 'comprador1', password: 'comprador123', role: 'COMPRADOR', badgeClass: 'badge-comprador' },
+  { username: 'comprador2', password: 'comprador123', role: 'COMPRADOR', badgeClass: 'badge-comprador' },
+  { username: 'comprador3', password: 'comprador123', role: 'COMPRADOR', badgeClass: 'badge-comprador' },
+  { username: 'comprador4', password: 'comprador123', role: 'COMPRADOR', badgeClass: 'badge-comprador' },
+  { username: 'comprador5', password: 'comprador123', role: 'COMPRADOR', badgeClass: 'badge-comprador' },
 ]
 
 export default function LoginPage({ onLoggedIn }) {

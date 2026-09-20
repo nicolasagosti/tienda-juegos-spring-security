@@ -28,7 +28,7 @@ jobs:
           cache: maven
 
       - name: Compilar y empaquetar los 5 modulos
-        run: mvn -B -f services/pom.xml verify
+        run: mvn -B -f backend/pom.xml verify
 
   frontend:
     name: Frontend (React/Vite build)

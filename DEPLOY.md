@@ -96,6 +96,57 @@ docker compose -f docker-compose.prod.yml down                 # parar (los vol�
 `catalogo-db-data` y las imágenes en `catalogo-uploads`. Programá un
 `pg_dump` de las 3 bases.
 
+## Alternativa: exponer el backend con Cloudflare Tunnel (sin Caddy)
+
+Si el dominio está en Cloudflare, se puede reemplazar Caddy por un
+**Cloudflare Tunnel**: `cloudflared` corre en el VPS y abre una conexión
+**saliente** a Cloudflare, que termina el TLS en su borde. Ventajas: el VPS
+**no expone ningún puerto** (el firewall puede bloquear todo el tráfico
+entrante), el certificado lo maneja Cloudflare y quedás detrás de su CDN/WAF.
+
+```
+   navegador ──▶ Cloudflare (TLS + CDN) ──▶ [tunnel saliente] ──▶ VPS: cloudflared ──▶ api-gateway ──▶ ...
+```
+
+**1. Crear el túnel en Cloudflare** (una vez):
+
+- Zero Trust → **Networks → Tunnels → Create a tunnel** → tipo *Cloudflared*.
+  Ponerle nombre y **copiar el token** (`eyJ...`).
+- En el túnel → pestaña **Public Hostname → Add a public hostname**:
+  - Subdomain `api`, Domain `tudominio.com`
+  - Type **HTTP**, URL `api-gateway:8080`
+
+  Cloudflare crea solo el registro DNS de `api.tudominio.com`.
+
+**2. En el VPS**: mismo `.env` que arriba (los `*_DB_PASSWORD`, `INTERNAL_SECRET`,
+`GATEWAY_ALLOWED_ORIGINS`, `FRONTEND_URL` siguen igual) y además:
+
+```bash
+TUNNEL_TOKEN=eyJ...        # el token del paso 1; DOMAIN/TLS_EMAIL quedan sin uso
+```
+
+**3. Levantar** con el override (agrega `cloudflared`, saca Caddy):
+
+```bash
+docker compose -f docker-compose.prod.yml -f docker-compose.cloudflare.yml up -d --build
+docker compose -f docker-compose.prod.yml -f docker-compose.cloudflare.yml ps
+docker compose -f docker-compose.prod.yml -f docker-compose.cloudflare.yml logs -f cloudflared
+```
+
+Verificación (igual que con Caddy, `api.tudominio.com` ahora lo resuelve Cloudflare):
+
+```bash
+curl -s https://api.tudominio.com/actuator/health
+```
+
+Para el **login con Google** la redirect URI no cambia:
+`https://api.tudominio.com/login/oauth2/code/google`.
+
+> El frontend puede ir en Cloudflare Pages (build `npm run build` con
+> `VITE_STANDALONE_BUILD=true`, output `frontend/dist`), igual que en Vercel
+> pero con `VITE_API_BASE_URL=https://api.tudominio.com/api`. También podés
+> agregar un segundo *Public Hostname* al mismo túnel para servirlo desde el VPS.
+
 ## Limitaciones de este setup
 
 Heredadas del enfoque "un VPS, un `docker compose`":
@@ -105,8 +156,9 @@ Heredadas del enfoque "un VPS, un `docker compose`":
 - **Imágenes de juegos en un volumen local**: sirve con una instancia de
   catalogo-service; para escalar hay que mover esto a S3/Cloudinary (ver
   `MICROSERVICES.md` §7).
-- **`ddl-auto=update`**: Hibernate crea/actualiza las tablas. Un proyecto real
-  usaría Flyway/Liquibase por servicio.
+- **Esquema con Flyway** (`db/migration/V*.sql` por servicio, perfil `docker`):
+  Hibernate queda en `validate`. En dev (H2) sigue armando el esquema Hibernate.
+  Sobre un volumen ya existente, Flyway hace *baseline* a V1 y no re-ejecuta nada.
 - **`/actuator/health` del gateway queda público** detrás de Caddy. Si molesta,
   bloquealo en el `Caddyfile`.
 - Escalar a más de un host = Kubernetes (u otro orquestador), fuera del alcance

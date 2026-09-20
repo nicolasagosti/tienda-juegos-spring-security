@@ -19,12 +19,17 @@ frontend/dist/
 # El build de React embebido se genera dentro del gateway; no se versiona
 # (ni el directorio: el gateway arranca igual sin el, ver SpaFallbackConfig).
 # Se regenera con "npm run build" (ver frontend/vite.config.js).
-services/api-gateway/src/main/resources/static/
+backend/api-gateway/src/main/resources/static/
 
-# Imagenes subidas en tiempo de ejecucion (catalogo-service, perfil dev).
+# Imagenes subidas en tiempo de ejecucion (negocio-service, perfil dev).
 # La carpeta "uploads" se crea donde se ejecute el servicio (cwd).
 /uploads/
-services/catalogo-service/uploads/
+backend/negocio-service/uploads/
+
+# Arbol viejo "services/": la migracion a "backend/" ya esta hecha. La
+# extension de modernizacion de VSCode a veces lo recrea con basura de
+# build; que no vuelva a colarse en un commit.
+/services/
 
 # --- Claves JWT de PRODUCCION ---
 # Las de la demo (keys/jwt-*.pem y las copias en cada servicio) SI se

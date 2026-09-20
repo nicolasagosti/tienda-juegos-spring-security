@@ -1,4 +1,4 @@
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../contexts/AuthContext'
 
 const ROLE_CLASS = { ADMIN: 'badge-admin', VENDEDOR: 'badge-vendedor', COMPRADOR: 'badge-comprador' }
 
@@ -24,6 +24,11 @@ export default function Navbar({ user, navigate, activeView, notify }) {
         {(user.rol === 'VENDEDOR' || user.rol === 'ADMIN') && (
           <button className={linkClass('gameForm')} onClick={() => navigate('gameForm')}>
             Publicar juego
+          </button>
+        )}
+        {user.rol === 'COMPRADOR' && (
+          <button className={linkClass('misCompras')} onClick={() => navigate('misCompras')}>
+            Mis compras
           </button>
         )}
         {user.rol === 'ADMIN' && (

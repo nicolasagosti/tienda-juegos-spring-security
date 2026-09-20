@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { AuthProvider, useAuth } from './context/AuthContext'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
 import Navbar from './components/Navbar'
 import Toast from './components/Toast'
 import LoginPage from './components/LoginPage'
@@ -9,6 +9,7 @@ import AdminDashboard from './components/AdminDashboard'
 import AdminUsersPage from './components/AdminUsersPage'
 import UserFormPage from './components/UserFormPage'
 import AdminSectionsPage from './components/AdminSectionsPage'
+import MisComprasPage from './components/MisComprasPage'
 import SecurityPage from './components/SecurityPage'
 
 // Navegacion simple basada en estado (sin react-router): esta SPA vive
@@ -59,6 +60,7 @@ function Shell() {
           <UserFormPage userId={view.params.id} navigate={navigate} notify={notify} />
         )}
         {view.name === 'adminSections' && <AdminSectionsPage notify={notify} />}
+        {view.name === 'misCompras' && <MisComprasPage notify={notify} />}
         {view.name === 'security' && <SecurityPage notify={notify} />}
       </main>
     </div>

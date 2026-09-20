@@ -5,7 +5,7 @@ import path from 'node:path'
 // Dos formas de compilar este frontend:
 //
 //  - "embebido" (modo por defecto, uso local): el resultado se copia
-//    adentro del api-gateway (services/api-gateway/src/main/resources/static),
+//    adentro del api-gateway (backend/api-gateway/src/main/resources/static),
 //    que lo sirve en "/" y rutea /api/** a los microservicios. Un solo
 //    puerto (8080) para todo.
 //
@@ -17,7 +17,7 @@ const standalone = process.env.VITE_STANDALONE_BUILD === 'true'
 
 const gatewayStatic = path.resolve(
   import.meta.dirname,
-  '../services/api-gateway/src/main/resources/static',
+  '../backend/api-gateway/src/main/resources/static',
 )
 
 export default defineConfig({

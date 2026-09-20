@@ -1,0 +1,53 @@
+# ==========================================================
+# Override: exponer el backend con Cloudflare Tunnel en vez de Caddy.
+#
+#   docker compose -f docker-compose.prod.yml -f docker-compose.cloudflare.yml up -d --build
+#
+# Cloudflare termina el TLS en su borde y "cloudflared" abre una conexion
+# SALIENTE hacia Cloudflare: el VPS NO expone ningun puerto (ni 80 ni 443,
+# el firewall puede bloquear todo el trafico entrante). Por eso el reverse
+# proxy con TLS propio (Caddy) sobra y este override lo desactiva.
+#
+# Preparacion (una sola vez, en el panel de Cloudflare):
+#   1. Zero Trust -> Networks -> Tunnels -> "Create a tunnel" -> tipo
+#      "Cloudflared". Ponerle nombre y copiar el TOKEN que muestra.
+#   2. En el tunnel -> pestana "Public Hostname" -> "Add a public hostname":
+#        Subdomain: api      Domain: tudominio.com
+#        Type: HTTP          URL:  api-gateway:8080
+#      (Cloudflare crea solo el registro DNS de api.tudominio.com.)
+#   3. Copiar el token a .env  ->  TUNNEL_TOKEN=eyJ...   (ver .env.prod.example)
+#
+# Con este override NO se usan DOMAIN ni TLS_EMAIL del .env (los maneja
+# Cloudflare), pero pueden quedar con cualquier valor.
+# ==========================================================
+name: gamestore-prod
+
+services:
+  # Caddy queda fuera: lo mandamos a un perfil que ningun comando activa,
+  # asi "up" no lo arranca. !reset limpia puertos/env para que compose no
+  # exija DOMAIN/TLS_EMAIL al parsear el archivo.
+  caddy:
+    profiles: ["_disabled"]
+    ports: !reset null
+    environment: !reset null
+    depends_on: !reset null
+
+  cloudflared:
+    # Revisar la ultima release en:
+    #   https://github.com/cloudflare/cloudflared/releases
+    image: cloudflare/cloudflared:2024.10.1
+    restart: unless-stopped
+    command: tunnel --no-autoupdate --metrics 0.0.0.0:2000 run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?falta TUNNEL_TOKEN en .env}
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "cloudflared", "--version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      api-gateway: { condition: service_healthy }

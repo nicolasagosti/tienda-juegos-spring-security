@@ -7,16 +7,31 @@
 # Antes de la primera vez conviene compilar el frontend para que el
 # gateway tenga algo que servir en "/":
 #   cd frontend && npm install && npm run build && cd ..
-# (deja el build en services/api-gateway/src/main/resources/static)
+# (deja el build en backend/api-gateway/src/main/resources/static)
 #
-# Cada servicio tiene su propia base Postgres. El perfil "docker" de cada
-# app (application-docker.properties / .yml) toma estas variables.
+# Servicios: auth-service, negocio-service (catalogo + usuarios unificados) y
+# api-gateway. Cada servicio con estado tiene su propia base Postgres. El
+# perfil "docker" de cada app toma estas variables.
 # ==========================================================
 name: gamestore
 
 x-service-build: &service-build
-  context: ./services
+  context: ./backend
   dockerfile: Dockerfile
+
+# Limites de memoria (los aplica "docker compose up", no hace falta swarm).
+# Cada JVM ajusta su heap al limite via -XX:MaxRAMPercentage (ver Dockerfile).
+x-db-deploy: &db-deploy
+  resources:
+    limits:
+      memory: 256M
+
+x-svc-deploy: &svc-deploy
+  resources:
+    limits:
+      memory: 700M
+    reservations:
+      memory: 300M
 
 services:
   # ---------- Bases de datos (una por servicio) ----------
@@ -27,53 +42,44 @@ services:
       POSTGRES_USER: auth
       POSTGRES_PASSWORD: auth
     volumes: [auth-db-data:/var/lib/postgresql/data]
+    deploy: { <<: *db-deploy }
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U auth -d authdb"]
       interval: 5s
       timeout: 3s
       retries: 20
 
-  usuarios-db:
+  negocio-db:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: usuariosdb
-      POSTGRES_USER: usuarios
-      POSTGRES_PASSWORD: usuarios
-    volumes: [usuarios-db-data:/var/lib/postgresql/data]
+      POSTGRES_DB: negociodb
+      POSTGRES_USER: negocio
+      POSTGRES_PASSWORD: negocio
+    volumes: [negocio-db-data:/var/lib/postgresql/data]
+    deploy: { <<: *db-deploy }
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U usuarios -d usuariosdb"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-
-  catalogo-db:
-    image: postgres:16-alpine
-    environment:
-      POSTGRES_DB: catalogodb
-      POSTGRES_USER: catalogo
-      POSTGRES_PASSWORD: catalogo
-    volumes: [catalogo-db-data:/var/lib/postgresql/data]
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U catalogo -d catalogodb"]
+      test: ["CMD-SHELL", "pg_isready -U negocio -d negociodb"]
       interval: 5s
       timeout: 3s
       retries: 20
 
   # ---------- Servicios ----------
-  usuarios-service:
+  negocio-service:
     build:
       <<: *service-build
       args:
-        SERVICE: usuarios-service
+        SERVICE: negocio-service
+    deploy: { <<: *svc-deploy }
     environment:
-      DATABASE_URL: jdbc:postgresql://usuarios-db:5432/usuariosdb
-      DATABASE_USERNAME: usuarios
-      DATABASE_PASSWORD: usuarios
+      DATABASE_URL: jdbc:postgresql://negocio-db:5432/negociodb
+      DATABASE_USERNAME: negocio
+      DATABASE_PASSWORD: negocio
       AUTH_URL: http://auth-service:8081
-      CATALOGO_URL: http://catalogo-service:8083
       INTERNAL_SECRET: ${INTERNAL_SECRET:-dev-internal-secret-cambiar-en-prod}
+      UPLOAD_DIR: /data/uploads
+    volumes: [negocio-uploads:/data/uploads]
     depends_on:
-      usuarios-db: { condition: service_healthy }
+      negocio-db: { condition: service_healthy }
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8082/actuator/health"]
       interval: 10s
@@ -86,43 +92,21 @@ services:
       <<: *service-build
       args:
         SERVICE: auth-service
+    deploy: { <<: *svc-deploy }
     environment:
       DATABASE_URL: jdbc:postgresql://auth-db:5432/authdb
       DATABASE_USERNAME: auth
       DATABASE_PASSWORD: auth
-      USUARIOS_URL: http://usuarios-service:8082
+      USUARIOS_URL: http://negocio-service:8082
       INTERNAL_SECRET: ${INTERNAL_SECRET:-dev-internal-secret-cambiar-en-prod}
       FRONTEND_URL: http://localhost:8080
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
     depends_on:
       auth-db: { condition: service_healthy }
-      usuarios-service: { condition: service_healthy }
+      negocio-service: { condition: service_healthy }
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8081/actuator/health"]
-      interval: 10s
-      timeout: 3s
-      retries: 20
-      start_period: 40s
-
-  catalogo-service:
-    build:
-      <<: *service-build
-      args:
-        SERVICE: catalogo-service
-    environment:
-      DATABASE_URL: jdbc:postgresql://catalogo-db:5432/catalogodb
-      DATABASE_USERNAME: catalogo
-      DATABASE_PASSWORD: catalogo
-      USUARIOS_URL: http://usuarios-service:8082
-      INTERNAL_SECRET: ${INTERNAL_SECRET:-dev-internal-secret-cambiar-en-prod}
-      UPLOAD_DIR: /data/uploads
-    volumes: [catalogo-uploads:/data/uploads]
-    depends_on:
-      catalogo-db: { condition: service_healthy }
-      usuarios-service: { condition: service_healthy }
-    healthcheck:
-      test: ["CMD", "curl", "-fsS", "http://localhost:8083/actuator/health"]
       interval: 10s
       timeout: 3s
       retries: 20
@@ -133,16 +117,15 @@ services:
       <<: *service-build
       args:
         SERVICE: api-gateway
+    deploy: { <<: *svc-deploy }
     ports:
       - "8080:8080"
     environment:
       SERVICES_AUTH_URL: http://auth-service:8081
-      SERVICES_USUARIOS_URL: http://usuarios-service:8082
-      SERVICES_CATALOGO_URL: http://catalogo-service:8083
+      SERVICES_NEGOCIO_URL: http://negocio-service:8082
     depends_on:
       auth-service: { condition: service_healthy }
-      usuarios-service: { condition: service_healthy }
-      catalogo-service: { condition: service_healthy }
+      negocio-service: { condition: service_healthy }
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8080/actuator/health"]
       interval: 10s
@@ -152,6 +135,5 @@ services:
 
 volumes:
   auth-db-data:
-  usuarios-db-data:
-  catalogo-db-data:
-  catalogo-uploads:
+  negocio-db-data:
+  negocio-uploads:
