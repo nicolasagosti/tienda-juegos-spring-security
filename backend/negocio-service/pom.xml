@@ -19,13 +19,17 @@
         estadisticas). Antes eran catalogo-service y usuarios-service, que se
         hablaban por HTTP; ahora comparten proceso y base, y la comunicacion
         entre los dos sub-dominios es una llamada Java directa a traves de un
-        puerto (paquetes catalogo.spi / usuarios.spi).
+        puerto (paquetes catalogo.spi / usuario.spi).
     </description>
 
     <dependencies>
         <dependency>
             <groupId>com.gamestore</groupId>
             <artifactId>common-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.gamestore</groupId>
+            <artifactId>common-web</artifactId>
         </dependency>
 
         <dependency>

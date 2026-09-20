@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { AuthProvider, useAuth } from './context/AuthContext'
+import { AuthProvider, useAuth } from './contexts/AuthContext'
 import Navbar from './components/Navbar'
 import Toast from './components/Toast'
 import LoginPage from './components/LoginPage'

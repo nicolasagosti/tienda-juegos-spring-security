@@ -2,7 +2,7 @@ package com.gamestore.negocio.catalogo.integration;
 
 import com.gamestore.negocio.catalogo.repository.JuegoRepository;
 import com.gamestore.negocio.catalogo.repository.SeccionRepository;
-import com.gamestore.negocio.usuarios.spi.ConsultaCatalogo;
+import com.gamestore.negocio.usuario.spi.ConsultaCatalogo;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 

@@ -2,10 +2,10 @@ package com.gamestore.negocio.validation;
 
 import com.gamestore.negocio.catalogo.dto.CrearSeccionRequestDto;
 import com.gamestore.negocio.catalogo.dto.JuegoFormRequestDto;
-import com.gamestore.negocio.usuarios.model.Rol;
-import com.gamestore.negocio.usuarios.dto.ActualizarUsuarioRequestDto;
-import com.gamestore.negocio.usuarios.dto.CrearUsuarioRequestDto;
-import com.gamestore.negocio.usuarios.dto.GoogleUsuarioRequestDto;
+import com.gamestore.negocio.usuario.model.Rol;
+import com.gamestore.negocio.usuario.dto.ActualizarUsuarioRequestDto;
+import com.gamestore.negocio.usuario.dto.CrearUsuarioRequestDto;
+import com.gamestore.negocio.usuario.dto.GoogleUsuarioRequestDto;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;

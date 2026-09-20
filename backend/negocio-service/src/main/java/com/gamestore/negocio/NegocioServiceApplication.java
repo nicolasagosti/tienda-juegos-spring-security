@@ -16,7 +16,7 @@ import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServic
  * </ul>
  *
  * Cada sub-dominio es un paquete de primer nivel ({@code com.gamestore.negocio.catalogo}
- * y {@code com.gamestore.negocio.usuarios}) con su propia capa model / repository /
+ * y {@code com.gamestore.negocio.usuario}) con su propia capa model / repository /
  * service / web. Lo unico que cruza el limite entre los dos son dos interfaces
  * chicas ("puertos"):
  *
@@ -24,7 +24,7 @@ import org.springframework.boot.autoconfigure.security.servlet.UserDetailsServic
  *   <li>{@code catalogo.spi.ResolucionVendedores} - catalogo necesita el
  *       nombre/email/rol del vendedor para armar el JuegoDTO. Lo implementa
  *       {@code usuarios.integration.ResolucionVendedoresJpaAdapter}.</li>
- *   <li>{@code usuarios.spi.ConsultaCatalogo} - el ABM necesita saber si un
+ *   <li>{@code usuario.spi.ConsultaCatalogo} - el ABM necesita saber si un
  *       usuario tiene juegos antes de borrarlo, y el dashboard necesita los
  *       totales. Lo implementa {@code catalogo.integration.ConsultaCatalogoJpaAdapter}.</li>
  * </ul>

@@ -2,6 +2,7 @@ package com.gamestore.auth.service;
 
 import com.gamestore.auth.client.UsuarioInfo;
 import com.gamestore.auth.client.UsuariosClient;
+import com.gamestore.auth.exception.AuthExceptions;
 import com.gamestore.auth.model.Credential;
 import com.gamestore.auth.model.RefreshToken;
 import com.gamestore.auth.repository.CredentialRepository;

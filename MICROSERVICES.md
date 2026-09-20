@@ -146,3 +146,54 @@ volumen). Ningún servicio puede leer la base de otro.
 | usuarios-service | 8082 | 8082 | — |
 | catalogo-service | 8083 | 8083 | — |
 | auth-db / usuarios-db / catalogo-db | — | 5432 (cada uno) | — |
+
+## 9. Convención de nombres de paquetes
+
+Regla única, sin excepciones: **todo paquete Java va en singular.**
+
+El nombre del paquete describe *la capa o el concepto*, que es uno solo; la
+pluralidad está en las clases que contiene, no en la carpeta.
+
+```
+com.gamestore.<servicio>
+  ├─ <subdominio>/          catalogo, usuario        (contexto de negocio)
+  │    ├─ controller/       lo que expone HTTP
+  │    ├─ service/          lógica de negocio
+  │    ├─ repository/       acceso a datos (Spring Data)
+  │    ├─ model/            entidades JPA
+  │    ├─ dto/              records de request/response
+  │    ├─ client/           clientes HTTP a otros servicios
+  │    ├─ spi/              puertos (interfaces) hacia el otro subdominio
+  │    ├─ integration/      adaptadores que implementan los spi del otro lado
+  │    └─ config/           configuración de Spring
+  ├─ exception/             excepciones propias + su @RestControllerAdvice
+  └─ config/                configuración transversal del servicio
+```
+
+En el frontend (React) la convención es la del ecosistema JS: **la carpeta que
+agrupa módulos del mismo tipo va en plural** (`components/`, `contexts/`);
+`api/` es el nombre de la capa, no una colección, y queda como está.
+
+## 10. Manejo de errores: `common-web`
+
+Antes cada servicio tenía su propio `ApiExceptionHandler` y su propia copia de
+`ErrorResponseDto` y `ServicioNoDisponibleException`. Podían divergir sin que
+nada lo avisara. Ahora hay tres niveles:
+
+| Dónde | Qué resuelve |
+|---|---|
+| `common-web` → `GlobalExceptionHandler` | lo que aparece en **todos** los servicios: `IllegalArgumentException` (400), `ConflictException` (409), `ServicioNoDisponibleException` (503) y las tres formas de fallar de Bean Validation (400 con `"campo: motivo"`) |
+| `auth-service` → `AuthExceptionHandler` | solo el login: 2FA requerido (401 con `requiere2fa`), no autorizado, cuenta deshabilitada |
+| `negocio-service` → `NegocioExceptionHandler` | solo lo suyo: `IllegalStateException` (502, compensación fallida), `DataIntegrityViolationException` (409), `AccessDeniedException` (403, es el único con method security) y `MaxUploadSizeExceededException` (413) |
+
+`common-web` es una librería, igual que `common-security`: se publica sola vía
+`CommonWebAutoConfiguration` (`META-INF/spring/...AutoConfiguration.imports`),
+porque `com.gamestore.common.web` queda fuera del component scan de cada
+servicio. Alcanza con tener la dependencia en el `pom.xml`.
+
+El `GlobalExceptionHandler` va con `@Order(Ordered.LOWEST_PRECEDENCE)`: si un
+servicio declara un handler propio para la misma excepción, gana el del
+servicio y el global queda de red de seguridad.
+
+El cuerpo JSON de error sigue siendo el mismo de siempre —
+`{"mensaje": "..."}`— así que el frontend no cambia.

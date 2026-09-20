@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.gamestore</groupId>
+        <artifactId>gamestore-services</artifactId>
+        <version>1.0.0</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <artifactId>common-web</artifactId>
+    <name>common-web</name>
+    <description>
+        Contrato de error HTTP compartido por todos los servicios: el cuerpo
+        JSON unico (ErrorResponseDto), las excepciones que cualquier servicio
+        puede lanzar (ConflictException, ServicioNoDisponibleException) y el
+        GlobalExceptionHandler que las traduce a status + JSON.
+
+        Cada servicio agrega encima su propio @RestControllerAdvice para las
+        excepciones que solo existen en su dominio (ver AuthExceptionHandler y
+        NegocioExceptionHandler).
+    </description>
+
+    <!-- Libreria pura: NO se empaqueta como app ejecutable. -->
+
+    <dependencies>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-autoconfigure</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+        </dependency>
+        <!-- ConstraintViolationException de Bean Validation. La
+             implementacion (Hibernate Validator) la pone cada servicio. -->
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!--
+              Mismo motivo que en common-security: el repackage por defecto de
+              spring-boot-starter-parent convierte el jar en un fat-jar
+              ejecutable y eso rompe una libreria.
+            -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>repackage</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+
+</project>

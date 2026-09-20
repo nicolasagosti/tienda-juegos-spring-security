@@ -43,6 +43,7 @@
 
     <modules>
         <module>common-security</module>
+        <module>common-web</module>
         <module>api-gateway</module>
         <module>auth-service</module>
         <!-- negocio-service: unifica lo que antes eran catalogo-service y
@@ -65,6 +66,13 @@
             <dependency>
                 <groupId>com.gamestore</groupId>
                 <artifactId>common-security</artifactId>
+                <version>1.0.0</version>
+            </dependency>
+
+            <!-- El contrato de error HTTP compartido (ErrorResponseDto + GlobalExceptionHandler) -->
+            <dependency>
+                <groupId>com.gamestore</groupId>
+                <artifactId>common-web</artifactId>
                 <version>1.0.0</version>
             </dependency>
 

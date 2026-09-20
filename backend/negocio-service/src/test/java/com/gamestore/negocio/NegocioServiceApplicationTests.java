@@ -6,7 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 /**
  * Arranca el contexto completo con H2. Sirve, sobre todo, para verificar que
  * el cableado cruzado entre los dos sub-dominios (los adapters que implementan
- * {@code catalogo.spi.ResolucionVendedores} y {@code usuarios.spi.ConsultaCatalogo})
+ * {@code catalogo.spi.ResolucionVendedores} y {@code usuario.spi.ConsultaCatalogo})
  * no genera un ciclo de beans.
  */
 @SpringBootTest

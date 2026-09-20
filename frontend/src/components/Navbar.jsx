@@ -1,4 +1,4 @@
-import { useAuth } from '../context/AuthContext'
+import { useAuth } from '../contexts/AuthContext'
 
 const ROLE_CLASS = { ADMIN: 'badge-admin', VENDEDOR: 'badge-vendedor', COMPRADOR: 'badge-comprador' }
 

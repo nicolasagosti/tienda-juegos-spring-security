@@ -17,6 +17,7 @@ WORKDIR /build
 # Copiamos primero solo los pom.xml para cachear la resolucion de dependencias.
 COPY pom.xml .
 COPY common-security/pom.xml common-security/
+COPY common-web/pom.xml common-web/
 COPY api-gateway/pom.xml api-gateway/
 COPY auth-service/pom.xml auth-service/
 COPY negocio-service/pom.xml negocio-service/
